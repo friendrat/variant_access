@@ -22,6 +22,23 @@ fn in_variant<T>() -> bool {
     type_name::<T>() == type_name::<i64>() || type_name::<T>() == type_name::<bool>()
 }
 
+/// Makes a map of the form < field type : field name >
+///
+/// Provides validation that checks that no field type is used twice, else panics.
+/// Example:
+///     enum Enum {
+///         f1(i64),
+///         f2(bool)
+///     }
+/// returns [ < i64: f1 > , < bool, f2 > ]
+///
+/// Example:
+///     enum Enum {
+///         f1(i64),
+///         f2(bool),
+///         f3(i64),
+///     }
+/// panics as two distinct fields have type i64.
 fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
     let mut types: HashMap<&Ident, &Ident> = HashMap::new();
     if let Data::Enum(data) = &ast.data {

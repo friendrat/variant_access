@@ -1,6 +1,7 @@
 
 pub trait HasVariant {
     fn has_variant<T>(&self) -> bool;
+    fn type_of<T>(&self, _: T) -> &'static str;
 }
 
 pub trait ContainsVariant {

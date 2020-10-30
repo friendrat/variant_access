@@ -5,12 +5,11 @@ use std::iter::Enumerate;
 use std::collections::HashMap;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{self, Ident, Data, Type, TypePath, DeriveInput};
+use syn::{self, Ident, Data, DeriveInput};
 
 #[proc_macro_derive(VariantAccess)]
 pub fn variant_access_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
-
     impl_variant_access(&ast)
 }
 
@@ -18,13 +17,14 @@ fn type_of<T>(_: T) -> &'static str {
     type_name::<T>()
 }
 
-fn in_variant<T>() -> bool {
-    type_name::<T>() == type_name::<i64>() || type_name::<T>() == type_name::<bool>()
-}
-
 /// Makes a map of the form < field type : field name >
 ///
-/// Provides validation that checks that no field type is used twice, else panics.
+/// Provides validation
+///     -- that no field type is used twice.
+///     -- that input is enum.
+///     -- that all field types are primitive and do not have named fields
+/// if any of these validations fail, this function panics and halts compilation
+///
 /// Example:
 ///     enum Enum {
 ///         f1(i64),
@@ -39,6 +39,13 @@ fn in_variant<T>() -> bool {
 ///         f3(i64),
 ///     }
 /// panics as two distinct fields have type i64.
+///
+/// Example:
+///     enum Enum {
+///         f1(i64, i32),
+///         f2{x: bool}
+///     }
+/// panics as f1 does not have a primitive type or because f2 has a named field.
 fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
     let mut types: HashMap<&Ident, &Ident> = HashMap::new();
     if let Data::Enum(data) = &ast.data {
@@ -63,6 +70,8 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
                         }
                     }
                 }
+            } else {
+                panic!("Cannot derive VariantAccess for with whose types have named fields.")
             }
         }
     } else {
@@ -80,7 +89,7 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
 ///     }
 /// in_variant::<i64>() returns true
 /// in_variant::<i32>() returns false
-fn make_has_variant(ast: &DeriveInput, types: HashMap<&Ident, &Ident>) -> TokenStream {
+fn impl_has_variant(ast: &DeriveInput, types: HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident;
     let mut piece : String = format!("impl HasVariant for {}", name.to_string());
     piece.push_str(" { fn has_variant<T>(&self) -> bool { ");
@@ -98,10 +107,26 @@ fn make_has_variant(ast: &DeriveInput, types: HashMap<&Ident, &Ident>) -> TokenS
     piece.parse().unwrap()
 }
 
+fn impl_contains_variant(ast: &DeriveInput, types: HashMap<&Ident, &Ident>) -> TokenStream {
+    let name = &ast.ident.to_string();
+    let mut piece : String = format!("impl ContainsVariant for {}", name);
+    piece.push_str(" { fn contains_variant<T>(&self) -> Result<bool, {}> { if self.has_variant::<T>() { return match self { ");
+    for (ix, field_) in types.values().enumerate() {
+        piece.push_str(&format!("{}::{}(inner) => (Ok(type_of(*inner) == type_name::<T>())",
+                                name, field_));
+       if ix != types.len() - 1 {
+           piece.push_str(", ");
+       }  else {
+           piece.push_str("}; } Err(()) } }");
+       }
+    }
+    return piece.parse().unwrap();
+}
+
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     let name = &ast.ident;
     let types = fetch_types_from_enum(ast);
-    let mut tokens = make_has_variant(&ast, types);
+    let mut tokens = impl_has_variant(&ast, types);
 
     let gen = quote! {
         impl ContainsVariant for #name {

@@ -4,6 +4,7 @@ extern crate proc_macro;
 use std::any::type_name;
 #[allow(unused_imports)]
 use std::iter::Enumerate;
+use quote::quote;
 use std::collections::HashMap;
 use proc_macro::TokenStream;
 use syn::{self, Ident, Data, DeriveInput};
@@ -60,7 +61,8 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
                     if let syn::Type::Path(_type) = &field_entry.ty {
                         if let Some(_type) = &_type.path.segments.last(){
 
-                            let found_before = types.insert(&_type.ident, &var.ident);
+                            let found_before = types.insert(&_type.ident,
+                                                            &var.ident);
                             if let Some(_) = found_before {
                                 panic!("Cannot derive VariantAccess for enum with multiple fields \
                                         of same type");
@@ -94,14 +96,16 @@ fn impl_has_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
 
     for (ix, type_) in types.keys().enumerate() {
         if ix == types.len() - 1 {
-            piece.push_str(&format!("std::any::type_name::<T>() == std::any::type_name::<{}>()",
+            piece.push_str(&format!("std::any::type_name::<T>()\
+                                           == std::any::type_name::<{}>()",
                                     type_.to_string()));
         } else {
-            piece.push_str(&format!("std::any::type_name::<T>() == std::any::type_name::<{}>() || ",
+            piece.push_str(&format!("std::any::type_name::<T>() \
+                                           == std::any::type_name::<{}>() || ",
                                     type_.to_string()));
         }
     }
-    piece.push_str("} fn type_of<T>(&self, _: T) -> &'static str { std::any::type_name::<T>() } }");
+    piece.push_str("} }");
     piece.parse().unwrap()
 }
 
@@ -112,7 +116,7 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
                     if self.has_variant::<T>() { return match self { ");
     for (ix, field_) in types.values().enumerate() {
         piece.push_str(&format!("{}::{}(inner) => \
-                                Ok(self.type_of(*inner) == std::any::type_name::<T>())",
+                                Ok(type_of(*inner) == std::any::type_name::<T>())",
                                 name, field_));
        if ix != types.len() - 1 {
            piece.push_str(", ");
@@ -120,16 +124,34 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
            piece.push_str("}; } Err(()) } }");
        }
     }
-    println!("{}", piece);
+
+    return piece.parse().unwrap();
+}
+
+fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+    let name = &ast.ident.to_string();
+    let mut piece = String::new();
+    for (_type, field_) in types.iter() {
+        piece.push_str(&format!("impl GetVariant<{}> for {}", _type.to_string(), name));
+        piece.push_str(" { ");
+        piece.push_str(&format!(" fn get_variant(&self) -> Result<&{}, ()>",
+                                _type.to_string()));
+        piece.push_str("{  match self { ");
+        piece.push_str(&format!("{}::{}(inner) => Ok(inner), ",name, field_));
+        piece.push_str("_ => Err(()) } } }");
+    }
     return piece.parse().unwrap();
 }
 
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
-
+    let gen = quote!{
+        fn type_of<T>(_: T) -> &'static str { std::any::type_name::<T>() }
+    };
+    let mut tokens: TokenStream = gen.into();
     let types = fetch_types_from_enum(ast);
-    let mut tokens = impl_has_variant(&ast, &types);
-
+    tokens.extend::<TokenStream>(impl_has_variant(&ast, &types));
     tokens.extend::<TokenStream>(impl_contains_variant(&ast, &types));
+    tokens.extend::<TokenStream>(impl_get_variant(&ast, &types));
     tokens
 }
 

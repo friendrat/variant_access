@@ -1,0 +1,11 @@
+[package]
+name = "variant_access_traits"
+version = "0.1.0"
+authors = ["Jacob Turner"]
+edition = "2018"
+
+[lib]
+
+
+[dependencies]
+

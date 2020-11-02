@@ -1,12 +1,12 @@
 extern crate proc_macro;
 
+#[allow(unused_imports)]
 use std::any::type_name;
 #[allow(unused_imports)]
 use std::iter::Enumerate;
 use std::collections::HashMap;
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{self, Ident, Data, DeriveInput, Token};
+use syn::{self, Ident, Data, DeriveInput};
 
 #[proc_macro_derive(VariantAccess)]
 pub fn variant_access_derive(input: TokenStream) -> TokenStream {
@@ -111,7 +111,8 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
     piece.push_str(" { fn contains_variant<T>(&self) -> Result<bool, ()> { \
                     if self.has_variant::<T>() { return match self { ");
     for (ix, field_) in types.values().enumerate() {
-        piece.push_str(&format!("{}::{}(inner) => Ok(self.type_of(*inner) == std::any::type_name::<T>())",
+        piece.push_str(&format!("{}::{}(inner) => \
+                                Ok(self.type_of(*inner) == std::any::type_name::<T>())",
                                 name, field_));
        if ix != types.len() - 1 {
            piece.push_str(", ");
@@ -124,17 +125,11 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
 }
 
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
-    let name = &ast.ident;
+
     let types = fetch_types_from_enum(ast);
     let mut tokens = impl_has_variant(&ast, &types);
 
     tokens.extend::<TokenStream>(impl_contains_variant(&ast, &types));
     tokens
 }
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+

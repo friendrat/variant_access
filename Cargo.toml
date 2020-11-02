@@ -5,7 +5,10 @@ authors = ["Jacob Turner"]
 edition = "2018"
 
 [lib]
-
+proc-macro = true
 
 [dependencies]
-
+syn = "1.0"
+quote = "1.0"
+variant_access_traits = {path = "variant_access_traits"}
+variant_access_derive = {path = "variant_access_derive"}

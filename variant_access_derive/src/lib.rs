@@ -89,9 +89,9 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
 ///     }
 /// in_variant::<i64>() returns true
 /// in_variant::<i32>() returns false
-fn impl_has_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident;
-    let mut piece : String = format!("impl HasVariant for {}", name.to_string());
+    let mut piece : String = format!("impl ContainsVariant for {}", name.to_string());
     piece.push_str(" { fn has_variant<T>(&self) -> bool { ");
 
     for (ix, type_) in types.keys().enumerate() {
@@ -105,27 +105,21 @@ fn impl_has_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
                                     type_.to_string()));
         }
     }
-    piece.push_str("} }");
-    piece.parse().unwrap()
-}
 
-fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
-    let name = &ast.ident.to_string();
-    let mut piece : String = format!("impl ContainsVariant for {}", name);
-    piece.push_str(" { fn contains_variant<T>(&self) -> Result<bool, ()> { \
+    piece.push_str("} ");
+    piece.push_str("fn contains_variant<T>(&self) -> Result<bool, ()> { \
                     if self.has_variant::<T>() { return match self { ");
     for (ix, field_) in types.values().enumerate() {
         piece.push_str(&format!("{}::{}(inner) => \
                                 Ok(type_of(*inner) == std::any::type_name::<T>())",
                                 name, field_));
-       if ix != types.len() - 1 {
-           piece.push_str(", ");
-       }  else {
-           piece.push_str("}; } Err(()) } }");
-       }
+        if ix != types.len() - 1 {
+            piece.push_str(", ");
+        }  else {
+            piece.push_str("}; } Err(()) } }");
+        }
     }
-
-    return piece.parse().unwrap();
+    piece.parse().unwrap()
 }
 
 fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
@@ -149,7 +143,7 @@ fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     };
     let mut tokens: TokenStream = gen.into();
     let types = fetch_types_from_enum(ast);
-    tokens.extend::<TokenStream>(impl_has_variant(&ast, &types));
+    //tokens.extend::<TokenStream>(impl_has_variant(&ast, &types));
     tokens.extend::<TokenStream>(impl_contains_variant(&ast, &types));
     tokens.extend::<TokenStream>(impl_get_variant(&ast, &types));
     tokens

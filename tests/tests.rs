@@ -1,4 +1,4 @@
-use variant_access_traits::{HasVariant, ContainsVariant, GetVariant};
+use variant_access_traits::{ContainsVariant, GetVariant};
 use variant_access_derive::*;
 use std::error::Error;
 use std::fmt;

@@ -1,9 +1,6 @@
 
-pub trait HasVariant {
-    fn has_variant<T>(&self) -> bool;
-}
-
 pub trait ContainsVariant {
+    fn has_variant<T>(&self) -> bool;
     fn contains_variant<T>(&self) -> Result<bool, ()>;
 }
 

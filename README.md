@@ -4,7 +4,7 @@ A set of traits and macros for defining a common api for Rust enums based on the
 ## Basic Usage
 
 Consider the following enum:
-```
+``` rust
 enum Enum {
     F1(i32),
     F2(bool)
@@ -16,7 +16,7 @@ explicit use of tags.
 
 This is modelled on the api for the C++ type std::variant which is like Rust enums but without explicit
 names for each possible active field. Consider the following example:
-```
+``` rust
 let instance = Enum::F1(42);
 if instance.has_variant::<i32>() && instance.contains_variant::<i32>().unwrap() {
     let inner: &i32 = instance.get_variant().unwrap();
@@ -27,7 +27,7 @@ The above code first checks that instance has a field of type `i32`, then checks
 and then gets a reference to the raw value contained therein.
 
 In general, the traits provided in this crate give the following functionality to enums:
-```
+``` rust
 let mut instance = ...;
 
 // determines whether on of the possible fields has type T
@@ -49,7 +49,7 @@ let inner: &mut T = instance.get_variant_mut().unwrap();
 ```
 For basic enum types, these traits can be derived using the `derive_variant_access` macro. This macro
 derives all the traits in this crate. 
-```
+``` rust
 #[derive(VariantAccess)]
 enum Enum {
     F1(i32),

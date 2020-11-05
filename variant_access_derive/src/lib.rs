@@ -24,27 +24,35 @@ pub fn variant_access_derive(input: TokenStream) -> TokenStream {
 ///     -- that all field types are primitive and do not have named fields
 /// if any of these validations fail, this function panics and halts compilation
 ///
-/// Example:
-///     enum Enum {
-///         f1(i64),
-///         f2(bool)
-///     }
+/// # Example
+/// ```
+/// enum Enum {
+///     F1(i64),
+///     F2(bool)
+/// }
+/// ```
 /// returns [ < i64: f1 > , < bool, f2 > ]
 ///
-/// Example:
-///     enum Enum {
-///         f1(i64),
-///         f2(bool),
-///         f3(i64),
-///     }
-/// panics as two distinct fields have type i64.
+/// # Example
+/// ```
+/// #[derive(VariantAccess)]
+/// enum Enum {
+///     F1(i64),
+///     F2(bool),
+///     F3(i64),
+/// }
+/// ```
+/// panics in this function as two distinct fields have type i64.
 ///
-/// Example:
-///     enum Enum {
-///         f1(i64, i32),
-///         f2{x: bool}
-///     }
-/// panics as f1 does not have a primitive type or because f2 has a named field.
+/// # Example
+/// ```
+/// #[derive(VariantAccess)]
+/// enum Enum {
+///     F1(i64, i32),
+///     F2{x: bool}
+/// }
+/// ```
+/// panics in this function as F1 does not have a primitive type or because F2 has a named field.
 fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
     let mut types: HashMap<&Ident, &Ident> = HashMap::new();
     if let Data::Enum(data) = &ast.data {
@@ -83,19 +91,20 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
 /// Implements ContainsVariant trait that determines
 /// if one of the enum fields contains the input type
 ///
-/// Example:
-///     enum Enum {
-///         f1(i64),
-///         f2(bool)
-///     }
-/// has_variant::<i64>() returns true
-/// has_variant::<i32>() returns false
+/// # Example
+/// ```
+///enum Enum {
+///    F1(i64),
+///    F2(bool)
+///}
+/// let result: bool = has_variant::<i64>(); // assigns true to result
+/// let result: bool = has_variant::<i32>(); // assigns false to result
 ///
-/// Example:
-///     instance = Enum::f1(42);
-/// instance.contains_variant::<i64>() should return Ok(true)
-/// instance.contains_variant::<bool>() should return Ok(false)
-/// instance.contains_variant::<T>() for T != i64, bool should return Err
+/// let instance = Enum::f1(42);
+/// let result = instance.contains_variant::<i64>(); // result has value Ok(true)
+/// let result = instance.contains_variant::<bool>(); // result has value Ok(false)
+/// let result = instance.contains_variant::<i32>(); // result has value Err
+/// ```
 fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident;
     let mut piece : String = format!("impl ContainsVariant for {}", name.to_string());
@@ -132,18 +141,18 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
 /// Implements the GetVariant trait that retrieves the
 /// tagged value of the requested type, if possible
 ///
-/// Example:
-///     enum Enum {
-///         f1(i64),
-///         f2(bool)
-///     }
-///     let instance = Enum::f1(42);
+/// # Example:
+/// ```
+/// enum Enum {
+///     F1(i64),
+///     F2(bool)
+/// }
+/// let instance = Enum::f1(42);
 ///
-/// let inner: &i64 = instance.get_variant::<i64>().unwrap() assigns &42 to inner_value
-/// let inner: &bool = instance.get_variant::<bool>().unwrap() panics because of unhandled Err.
-/// let inner: &i32 = instance.get_variant::<i32>().unwrap() will not compile as GetVariant<i32> is
-/// not implemented for Enum.
-///
+/// let inner: &i64 = instance.get_variant::<i64>().unwrap(); // assigns &42 to inner_value
+/// // let inner: &bool = instance.get_variant::<bool>().unwrap() // panics because of unhandled Err.
+/// // let inner: &i32 = instance.get_variant::<i32>().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
+/// ```
 /// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
 fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident.to_string();

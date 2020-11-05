@@ -80,15 +80,22 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
     types
 }
 
-/// Implements HasVariant trait that determines if one of the enum fields contains the input type
+/// Implements ContainsVariant trait that determines
+/// if one of the enum fields contains the input type
 ///
 /// Example:
 ///     enum Enum {
 ///         f1(i64),
 ///         f2(bool)
 ///     }
-/// in_variant::<i64>() returns true
-/// in_variant::<i32>() returns false
+/// has_variant::<i64>() returns true
+/// has_variant::<i32>() returns false
+///
+/// Example:
+///     instance = Enum::f1(42);
+/// instance.contains_variant::<i64>() should return Ok(true)
+/// instance.contains_variant::<bool>() should return Ok(false)
+/// instance.contains_variant::<T>() for T != i64, bool should return Err
 fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident;
     let mut piece : String = format!("impl ContainsVariant for {}", name.to_string());
@@ -122,6 +129,22 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
     piece.parse().unwrap()
 }
 
+/// Implements the GetVariant trait that retrieves the
+/// tagged value of the requested type, if possible
+///
+/// Example:
+///     enum Enum {
+///         f1(i64),
+///         f2(bool)
+///     }
+///     let instance = Enum::f1(42);
+///
+/// let inner: &i64 = instance.get_variant::<i64>().unwrap() assigns &42 to inner_value
+/// let inner: &bool = instance.get_variant::<bool>().unwrap() panics because of unhandled Err.
+/// let inner: &i32 = instance.get_variant::<i32>().unwrap() will not compile as GetVariant<i32> is
+/// not implemented for Enum.
+///
+/// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
 fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident.to_string();
     let mut piece = String::new();
@@ -132,11 +155,19 @@ fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
                                 _type.to_string()));
         piece.push_str("{  match self { ");
         piece.push_str(&format!("{}::{}(inner) => Ok(inner), ",name, field_));
+        piece.push_str("_ => Err(()) } } ");
+
+        piece.push_str(&format!(" fn get_variant_mut(&mut self) -> Result<&mut {}, ()>",
+                                _type.to_string()));
+        piece.push_str("{  match self { ");
+        piece.push_str(&format!("{}::{}(inner) => Ok(inner), ", name, field_));
         piece.push_str("_ => Err(()) } } }");
     }
-    return piece.parse().unwrap();
+
+        return piece.parse().unwrap();
 }
 
+/// Implements both the ContainsVariant and GetVariant traits
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     let gen = quote!{
         fn type_of<T>(_: T) -> &'static str { std::any::type_name::<T>() }

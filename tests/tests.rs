@@ -28,7 +28,7 @@ impl Error for TestError {
 }
 
 
-#[derive(VariantAccess)]
+#[derive(VariantAccess, PartialEq, Debug)]
 enum Test {
     F1(i32),
     F2(bool)
@@ -85,3 +85,18 @@ fn test_get_variant_error_from_wrong_variant()  {
     let _: &bool = test.get_variant().expect("");
 }
 
+
+#[test]
+fn test_get_variant_mut() {
+    let mut test = Test::F1(42);
+    let inner: &mut i32 = test.get_variant_mut().expect("Expected get_variant_mut to return value");
+    *inner = 1;
+    assert_eq!(test, Test::F1(1));
+}
+
+#[test]
+#[should_panic]
+fn test_get_variant_mut_error_from_wrong_variant()  {
+    let mut test = Test::F1(42);
+    let _: &mut bool = test.get_variant_mut().expect("");
+}

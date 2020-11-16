@@ -1,4 +1,4 @@
-use variant_access_traits::{ContainsVariant, GetVariant};
+use variant_access_traits::{ContainsVariant, GetVariant, SetVariant};
 use variant_access_derive::*;
 use std::error::Error;
 use std::fmt;
@@ -32,6 +32,12 @@ impl Error for TestError {
 enum Test {
     F1(i32),
     F2(bool)
+}
+
+#[derive(VariantAccess, PartialEq, Debug)]
+enum AmbiguousTest {
+    F1(i32),
+    F2(i64)
 }
 
 #[test]
@@ -99,4 +105,18 @@ fn test_get_variant_mut() {
 fn test_get_variant_mut_error_from_wrong_variant()  {
     let mut test = Test::F1(42);
     let _: &mut bool = test.get_variant_mut().expect("");
+}
+
+#[test]
+fn test_set_variant(){
+    let mut test = Test::F2(false);
+    test.set_variant(42);
+    assert_eq!(test, Test::F1(42));
+}
+
+#[test]
+fn test_set_variant_ambiguous(){
+    let mut test = AmbiguousTest::F1(42);
+    test.set_variant(42 as i64);
+    assert_eq!(test, AmbiguousTest::F2(42));
 }

@@ -4,10 +4,11 @@ extern crate proc_macro;
 use std::any::type_name;
 #[allow(unused_imports)]
 use std::iter::Enumerate;
-use quote::quote;
+
 use std::collections::HashMap;
 use proc_macro::TokenStream;
 use syn::{self, Ident, Data, DeriveInput};
+
 
 #[proc_macro_derive(VariantAccess)]
 pub fn variant_access_derive(input: TokenStream) -> TokenStream {
@@ -31,7 +32,7 @@ pub fn variant_access_derive(input: TokenStream) -> TokenStream {
 ///     F2(bool)
 /// }
 /// ```
-/// returns [ < i64: f1 > , < bool, f2 > ]
+/// returns [ < i64: f1 > , < bool: f2 > ]
 ///
 /// # Example
 /// ```
@@ -125,10 +126,10 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
     piece.push_str("} ");
     piece.push_str("fn contains_variant<T>(&self) -> Result<bool, ()> { \
                     if self.has_variant::<T>() { return match self { ");
-    for (ix, field_) in types.values().enumerate() {
+    for (ix, (type_, field_)) in types.iter().enumerate() {
         piece.push_str(&format!("{}::{}(inner) => \
-                                Ok(type_of(*inner) == std::any::type_name::<T>())",
-                                name, field_));
+                                Ok(std::any::type_name::<{}>() == std::any::type_name::<T>())",
+                                name, field_, type_));
         if ix != types.len() - 1 {
             piece.push_str(", ");
         }  else {
@@ -173,19 +174,64 @@ fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
         piece.push_str("_ => Err(()) } } }");
     }
 
-        return piece.parse().unwrap();
+    return piece.parse().unwrap();
 }
 
+/// Implements the SetVariant trait that sets the
+/// tagged value of the field whose type matches the input value, if possible
+///
+/// # Example:
+/// ```
+/// enum Enum {
+///     F1(i64),
+///     F2(bool)
+/// }
+/// let mut instance = Enum::F1(42);
+///
+/// instance.set_variant(false); // instance now is equal to Enum::F2(false)
+/// // instance.set_variant(""); will not compile as Enum has not field of type &str
+/// ```
+/// This method uses type inference to try and determine which field to use. However this can
+/// be ambiguuous sometimes.
+///
+/// # Example:
+/// ```
+/// enum Enum {
+///     F1(i32),
+///     F2(i64)
+/// }
+///
+/// let mut instance = Enum::F1(42);
+/// instance.set_variante(1); // Is instance equal to Enum::F1(1) or Enum::F2(1) ???
+///
+/// // Do this instead
+/// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
+/// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
+/// ```
+///
+fn impl_set_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+    let name = &ast.ident.to_string();
+    let mut piece = String::new();
+    for (_type, field_) in types.iter() {
+        piece.push_str(&format!("impl SetVariant<{}> for {}", _type.to_string(), name));
+        piece.push_str(" { ");
+        piece.push_str(&format!(" fn set_variant(&mut self, value: {})",
+                                _type.to_string()));
+        piece.push_str("{ ");
+        piece.push_str(&format!("*self = {}::{}(value);",name, field_));
+        piece.push_str("} } ");
+
+    }
+    return piece.parse().unwrap()
+}
 /// Implements both the ContainsVariant and GetVariant traits
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
-    let gen = quote!{
-        fn type_of<T>(_: T) -> &'static str { std::any::type_name::<T>() }
-    };
-    let mut tokens: TokenStream = gen.into();
+    let mut tokens: TokenStream = "".parse().unwrap();
     let types = fetch_types_from_enum(ast);
-    //tokens.extend::<TokenStream>(impl_has_variant(&ast, &types));
+
     tokens.extend::<TokenStream>(impl_contains_variant(&ast, &types));
     tokens.extend::<TokenStream>(impl_get_variant(&ast, &types));
+    tokens.extend::<TokenStream>(impl_set_variant(&ast, &types));
     tokens
 }
 

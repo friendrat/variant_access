@@ -6,6 +6,7 @@
 pub trait ContainsVariant {
     fn has_variant<T>(&self) -> bool;
     fn contains_variant<T>(&self) -> Result<bool, ()>;
+
 }
 
 
@@ -20,4 +21,15 @@ pub trait ContainsVariant {
 pub trait GetVariant<T> {
     fn get_variant(&self) -> Result<&T, ()>;
     fn get_variant_mut(&mut self) -> Result<&mut T, ()>;
+}
+
+/// This trait is for setting an inner value with the correct associated type to the given value
+///
+/// set_variant looks at the type of the parameter value and if one of the fields has this type,
+/// the enums active field is changed to this field with inner value set to given parameter.
+///
+/// This method is guaranteed to succeed in the sense that if an value is given whose type does not
+/// match the type of any field, the program will not compile.
+pub trait SetVariant<T> {
+    fn set_variant(&mut self, value: T);
 }

@@ -10,4 +10,4 @@ proc-macro = true
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-variant_access_traits = {path = "../variant_access_traits"}
+variant_access_traits = {path = "../variant_access_traits", version="0.1.0"}

@@ -4,7 +4,9 @@ version = "0.1.0"
 authors = ["Jacob Turner <jacob@friendrat.com> "]
 edition = "2018"
 readme = "README.md"
+description = "A set of traits and macros for defining a common api for Rust enums based on the std::variant api in the C++ standard library"
 repository = "https://github.com/FriendRat/variant_access"
+homepage = "https://github.com/FriendRat/variant_access"
 license = "MIT"
 categories = ["development-tools", "rust-patterns"]
 build = false
@@ -15,5 +17,5 @@ proc-macro = true
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-variant_access_traits = {path = "variant_access_traits"}
-variant_access_derive = {path = "variant_access_derive"}
+variant_access_traits = {path = "variant_access_traits", version="0.1.0"}
+variant_access_derive = {path = "variant_access_derive", version="0.1.0"}

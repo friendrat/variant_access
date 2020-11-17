@@ -23,5 +23,5 @@ members = [
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-#variant_access_traits = {git = "ssh://git@github.com/FriendRat/variant_access.git", version="0.1.0"}
-#variant_access_derive = {git = "ssh://git@github.com/FriendRat/variant_access.git", version="0.1.0"}
+variant_access_traits = { path = "variant_access_traits", version="0.1.0"}
+variant_access_derive = { path = "variant_access_derive", version="0.1.0"}

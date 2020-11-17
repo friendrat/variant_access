@@ -7,11 +7,8 @@ edition = "2018"
 [lib]
 proc-macro = true
 
-[net]
-retry = 2
-git-fetch-with-cli = true
 
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-variant_access_traits = {git = "ssh://git@github.com/FriendRat/variant_access.git", version="0.1.0"}
+variant_access_traits = {path = "../variant_access_traits"}

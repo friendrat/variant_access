@@ -1,4 +1,4 @@
-# Variant Access &emsp; [![Latest Version] [crates.io]]
+# Variant Access &emsp; ![Latest Version] 
 
 [Latest Version]: https://img.shields.io/crates/v/variant_access.svg
 [crates.io]: https://crates.io/crates/variant_access

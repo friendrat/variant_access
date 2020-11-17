@@ -1,4 +1,4 @@
-use variant_access_traits::{ContainsVariant, GetVariant, SetVariant};
+use variant_access_traits::{ContainsVariant, GetVariant, SetVariant, VariantAccessError};
 use variant_access_derive::*;
 use std::error::Error;
 use std::fmt;
@@ -69,6 +69,7 @@ fn test_contains_variant_error() -> Result<(), Box<dyn Error>> {
     if let Ok(_) = test.contains_variant::<i64>() {
         return Err(Box::new(TestError::new("Expected contains_variant to return Err!")));
     }
+
     Ok(())
 }
 

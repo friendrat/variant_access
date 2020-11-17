@@ -1,3 +1,44 @@
+use std::{error::Error, fmt};
+
+/// Custom errors for this crate. Keeps a record of the enum and requested type that produced
+/// the error
+#[derive(Debug)]
+pub struct VariantAccessError {
+    enum_name : String,
+    requested_type: String,
+    msg: String
+}
+
+impl VariantAccessError {
+
+    /// Makes the appropriate error message for when get_variant fails
+    pub fn wrong_active_field(type_name: &str, requested_type: &str) -> VariantAccessError {
+        VariantAccessError{
+            enum_name: type_name.to_string(),
+            requested_type: requested_type.to_string(),
+            msg: format!("Active filed of enum <{}> is not of requested type <{}>",
+                         type_name, requested_type)
+        }
+    }
+
+    /// Makes the appropriate error message for when has_variant fails
+    pub fn invalid_type(type_name: &str, requested_type: &str) -> VariantAccessError {
+        VariantAccessError{
+            enum_name: type_name.to_string(),
+            requested_type: requested_type.to_string(),
+            msg: format!("Requested type <{}> does not match the type of any field \
+                           in enum <{}>",  requested_type, type_name)
+        }
+    }
+}
+impl Error for VariantAccessError { }
+
+impl fmt::Display for VariantAccessError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "VariantAccessError :: {}", self.msg)
+    }
+}
+
 /// This trait is for querying an enum.
 ///
 /// has_variant is intended to determine if one of the variant fields is of the specified type
@@ -5,7 +46,7 @@
 /// of the fields is of specified type, it is intended that an Err be returned.
 pub trait ContainsVariant {
     fn has_variant<T>(&self) -> bool;
-    fn contains_variant<T>(&self) -> Result<bool, ()>;
+    fn contains_variant<T>(&self) -> Result<bool, VariantAccessError>;
 
 }
 
@@ -19,8 +60,8 @@ pub trait ContainsVariant {
 /// get_variant_mut is similar except it is for return a mutable reference to the raw value of the
 /// active field.
 pub trait GetVariant<T> {
-    fn get_variant(&self) -> Result<&T, ()>;
-    fn get_variant_mut(&mut self) -> Result<&mut T, ()>;
+    fn get_variant(&self) -> Result<&T, VariantAccessError>;
+    fn get_variant_mut(&mut self) -> Result<&mut T, VariantAccessError>;
 }
 
 /// This trait is for setting an inner value with the correct associated type to the given value

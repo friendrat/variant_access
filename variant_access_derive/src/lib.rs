@@ -124,7 +124,7 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
     }
 
     piece.push_str("} ");
-    piece.push_str("fn contains_variant<T>(&self) -> Result<bool, ()> { \
+    piece.push_str("fn contains_variant<T>(&self) -> Result<bool, VariantAccessError> { \
                     if self.has_variant::<T>() { return match self { ");
     for (ix, (type_, field_)) in types.iter().enumerate() {
         piece.push_str(&format!("{}::{}(inner) => \
@@ -133,7 +133,10 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
         if ix != types.len() - 1 {
             piece.push_str(", ");
         }  else {
-            piece.push_str("}; } Err(()) } }");
+            piece.push_str("}; } ");
+            piece.push_str( &format!(" Err(VariantAccessError::invalid_type(\"{}\", std::any::type_name::<T>()))",
+                                     name));
+            piece.push_str(" } }");
         }
     }
     piece.parse().unwrap()
@@ -161,17 +164,21 @@ fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
     for (_type, field_) in types.iter() {
         piece.push_str(&format!("impl GetVariant<{}> for {}", _type.to_string(), name));
         piece.push_str(" { ");
-        piece.push_str(&format!(" fn get_variant(&self) -> Result<&{}, ()>",
+        piece.push_str(&format!(" fn get_variant(&self) -> Result<&{}, VariantAccessError>",
                                 _type.to_string()));
         piece.push_str("{  match self { ");
         piece.push_str(&format!("{}::{}(inner) => Ok(inner), ",name, field_));
-        piece.push_str("_ => Err(()) } } ");
+        piece.push_str(&format!("_ => Err(VariantAccessError::wrong_active_field(\"{}\", \"{}\"))",
+                                name, _type.to_string()));
+        piece.push_str("} } ");
 
-        piece.push_str(&format!(" fn get_variant_mut(&mut self) -> Result<&mut {}, ()>",
+        piece.push_str(&format!(" fn get_variant_mut(&mut self) -> Result<&mut {}, VariantAccessError>",
                                 _type.to_string()));
         piece.push_str("{  match self { ");
         piece.push_str(&format!("{}::{}(inner) => Ok(inner), ", name, field_));
-        piece.push_str("_ => Err(()) } } }");
+        piece.push_str(&format!("_ => Err(VariantAccessError::wrong_active_field(\"{}\", \"{}\"))",
+                                name, _type.to_string()));
+        piece.push_str("} } }");
     }
 
     return piece.parse().unwrap();
@@ -208,7 +215,6 @@ fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
 /// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
 /// ```
-///
 fn impl_set_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
     let name = &ast.ident.to_string();
     let mut piece = String::new();
@@ -218,7 +224,7 @@ fn impl_set_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
         piece.push_str(&format!(" fn set_variant(&mut self, value: {})",
                                 _type.to_string()));
         piece.push_str("{ ");
-        piece.push_str(&format!("*self = {}::{}(value);",name, field_));
+        piece.push_str(&format!("*self = {}::{}(value);", name, field_));
         piece.push_str("} } ");
 
     }

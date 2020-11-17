@@ -1,8 +1,16 @@
 [package]
 name = "variant_access_derive"
 version = "0.1.0"
-authors = ["Jacob Turner"]
+authors = ["Jacob Turner <jacob@friendrat.com> "]
 edition = "2018"
+readme = "../README.md"
+description = "Prodedural macros for deriving the VariantAccess traits"
+repository = "https://github.com/FriendRat/variant_access/tree/master/variant_access_derive"
+homepage = "https://github.com/FriendRat/variant_access/tree/master/variant_access_derive"
+license = "MIT"
+categories = ["development-tools", "rust-patterns"]
+build = false
+
 
 [lib]
 proc-macro = true
@@ -11,4 +19,4 @@ proc-macro = true
 [dependencies]
 syn = "1.0"
 quote = "1.0"
-variant_access_traits = {path = "../variant_access_traits"}
+variant_access_traits = "0.1.0"

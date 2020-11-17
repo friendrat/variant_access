@@ -230,7 +230,7 @@ fn impl_set_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
     }
     return piece.parse().unwrap()
 }
-/// Implements both the ContainsVariant and GetVariant traits
+/// Implements both ContainsVariant, GetVariant, and SetVariant traits
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     let mut tokens: TokenStream = "".parse().unwrap();
     let types = fetch_types_from_enum(ast);

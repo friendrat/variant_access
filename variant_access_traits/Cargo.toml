@@ -1,8 +1,15 @@
 [package]
 name = "variant_access_traits"
 version = "0.1.0"
-authors = ["Jacob Turner"]
+authors = ["Jacob Turner <jacob@friendrat.com>"]
 edition = "2018"
+readme = "../README.md"
+description = "A set of traits and for defining a common api for Rust enums based on the std::variant api in the C++ standard library"
+repository = "https://github.com/FriendRat/variant_access/tree/master/variant_access_traits"
+homepage = "https://github.com/FriendRat/variant_access/tree/master/variant_access_traits"
+license = "MIT"
+categories = ["development-tools", "rust-patterns"]
+build = false
 
 [lib]
 

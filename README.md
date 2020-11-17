@@ -45,7 +45,16 @@ let inner: &T = instance.get_variant().unwrap();
 // retrieves a mutable reference to the raw value of the field of type T. If the
 // active field is not of type T, get_variant returns Err causing the following
 // code to panic. If no field has type T, the following will not compile.
-let inner: &mut T = instance.get_variant_mut().unwrap();                     
+let inner: &mut T = instance.get_variant_mut().unwrap();   
+
+// If instance has a field of type bool, this becomes the active field with
+// value of `false`. Otherwise, this will not compile.
+instance.set_variant(false);
+
+// Since instance can have multiple number-like fields, the following can be
+// used to enforce that the field of type i64 is set (if it exists).
+// Otherwise the outcome will be ambiguous to the user.
+instance.set_variant(3 as i64);
 ```
 For basic enum types, these traits can be derived using the `derive_variant_access` macro. This macro
 derives all the traits in this crate. 
@@ -70,3 +79,6 @@ computer generated code.
 For types that are auto-generated, it is difficult to support union types as one needs to generate an enum whose name
 and field tags will also be auto-generated and thus opaque to any user. Thus a uniform interface that does not require
 knowledge of field names allows the use of such auto-generated types, without being over burdensome to the end user.
+
+As an example, code-generated from protobuf schemas by default make all 
+inner values private and provide getters and setters to uniformize interaction with these entities. 

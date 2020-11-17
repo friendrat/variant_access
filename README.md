@@ -4,6 +4,7 @@
 [crates.io]: https://crates.io/crates/variant_access
 A set of traits and macros for defining a common api for Rust enums based on the std::variant api in the C++ standard library
 
+[See the documentation](https://docs.rs/variant_access_traits) 
 ## Basic Usage
 
 Consider the following enum:

@@ -8,12 +8,32 @@ use std::iter::Enumerate;
 use std::collections::HashMap;
 use proc_macro::TokenStream;
 use syn::{self, Ident, Data, DeriveInput};
+use syn::export::{ToTokens};
 
 
 #[proc_macro_derive(VariantAccess)]
 pub fn variant_access_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
     impl_variant_access(&ast)
+}
+
+fn parse_path(path: &syn::Path) -> String {
+    let mut fullname = String::from("");
+
+    let _ = path.segments.pairs()
+        .map(|e| {
+            fullname.push_str(&e.to_token_stream().to_string())
+        } )
+        .collect::<()>();
+    // remove extraneous whitespace
+    fullname.retain(|c| c != ' ');
+    // remove lifetime identifiers
+    let lifetime_index = fullname
+        .find('<');
+    if let Some(index) = lifetime_index {
+        let _ = fullname.split_off(index);
+    }
+    fullname
 }
 
 
@@ -54,28 +74,22 @@ pub fn variant_access_derive(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 /// panics in this function as F1 does not have a primitive type or because F2 has a named field.
-fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
-    let mut types: HashMap<&Ident, &Ident> = HashMap::new();
+fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<String, &Ident> {
+    let mut types: HashMap<String, &Ident> = HashMap::new();
+
     if let Data::Enum(data) = &ast.data {
         for var in data.variants.iter() {
 
-            if let syn::Fields::Unnamed(_field) = &var.fields{
-                if _field.unnamed.len() > 1 {
+            if let syn::Fields::Unnamed(field_) = &var.fields{
+                if field_.unnamed.len() > 1 {
                     panic!("Cannot only derive for enums with primitive variants,\
                            found complex type");
                 }
 
-                for field_entry in _field.unnamed.iter() {
-
-                    if let syn::Type::Path(_type) = &field_entry.ty {
-                        if let Some(_type) = &_type.path.segments.last(){
-
-                            let found_before = types.insert(&_type.ident,
-                                                            &var.ident);
-                            if let Some(_) = found_before {
-                                panic!("Cannot derive VariantAccess for enum with multiple fields \
-                                        of same type");
-                            }
+                for field_entry in field_.unnamed.iter() {
+                    if let syn::Type::Path(type_) = &field_entry.ty {
+                        if let Some(_) = types.insert(parse_path(&type_.path), &var.ident) {
+                            panic!("Cannot derive VariantAccess for enum with multiple fields of same type");
                         }
                     }
                 }
@@ -106,29 +120,29 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<&Ident, &Ident> {
 /// let result = instance.contains_variant::<bool>(); // result has value Ok(false)
 /// let result = instance.contains_variant::<i32>(); // result has value Err
 /// ```
-fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<String, &Ident>) -> TokenStream {
     let name = &ast.ident;
     let mut piece : String = format!("impl ContainsVariant for {}", name.to_string());
-    piece.push_str(" { fn has_variant<T>(&self) -> bool { ");
+    piece.push_str(" { fn has_variant<T: 'static>(&self) -> bool { ");
 
     for (ix, type_) in types.keys().enumerate() {
         if ix == types.len() - 1 {
-            piece.push_str(&format!("std::any::type_name::<T>()\
-                                           == std::any::type_name::<{}>()",
-                                    type_.to_string()));
+            piece.push_str(&format!("std::any::TypeId::of::<T>()\
+                                           == std::any::TypeId::of::<{}>()",
+                                    type_));
         } else {
-            piece.push_str(&format!("std::any::type_name::<T>() \
-                                           == std::any::type_name::<{}>() || ",
-                                    type_.to_string()));
+            piece.push_str(&format!("std::any::TypeId::of::<T>() \
+                                           == std::any::TypeId::of::<{}>() || ",
+                                    type_));
         }
     }
 
     piece.push_str("} ");
-    piece.push_str("fn contains_variant<T>(&self) -> Result<bool, VariantAccessError> { \
+    piece.push_str("fn contains_variant<T: 'static>(&self) -> Result<bool, VariantAccessError> { \
                     if self.has_variant::<T>() { return match self { ");
     for (ix, (type_, field_)) in types.iter().enumerate() {
         piece.push_str(&format!("{}::{}(inner) => \
-                                Ok(std::any::type_name::<{}>() == std::any::type_name::<T>())",
+                                Ok(std::any::TypeId::of::<{}>() == std::any::TypeId::of::<T>())",
                                 name, field_, type_));
         if ix != types.len() - 1 {
             piece.push_str(", ");
@@ -158,26 +172,26 @@ fn impl_contains_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> 
 /// // let inner: &i32 = instance.get_variant::<i32>().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
 /// ```
 /// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
-fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+fn impl_get_variant(ast: &DeriveInput, types: &HashMap<String, &Ident>) -> TokenStream {
     let name = &ast.ident.to_string();
     let mut piece = String::new();
-    for (_type, field_) in types.iter() {
-        piece.push_str(&format!("impl GetVariant<{}> for {}", _type.to_string(), name));
+    for (type_, field_) in types.iter() {
+        piece.push_str(&format!("impl GetVariant<{}> for {}", type_, name));
         piece.push_str(" { ");
         piece.push_str(&format!(" fn get_variant(&self) -> Result<&{}, VariantAccessError>",
-                                _type.to_string()));
-        piece.push_str("{  match self { ");
-        piece.push_str(&format!("{}::{}(inner) => Ok(inner), ",name, field_));
-        piece.push_str(&format!("_ => Err(VariantAccessError::wrong_active_field(\"{}\", \"{}\"))",
-                                name, _type.to_string()));
-        piece.push_str("} } ");
-
-        piece.push_str(&format!(" fn get_variant_mut(&mut self) -> Result<&mut {}, VariantAccessError>",
-                                _type.to_string()));
+                                type_));
         piece.push_str("{  match self { ");
         piece.push_str(&format!("{}::{}(inner) => Ok(inner), ", name, field_));
         piece.push_str(&format!("_ => Err(VariantAccessError::wrong_active_field(\"{}\", \"{}\"))",
-                                name, _type.to_string()));
+                                name, type_));
+        piece.push_str("} } ");
+
+        piece.push_str(&format!(" fn get_variant_mut(&mut self) -> Result<&mut {}, VariantAccessError>",
+                                type_));
+        piece.push_str("{  match self { ");
+        piece.push_str(&format!("{}::{}(inner) => Ok(inner), ", name, field_));
+        piece.push_str(&format!("_ => Err(VariantAccessError::wrong_active_field(\"{}\", \"{}\"))",
+                                name, type_));
         piece.push_str("} } }");
     }
 
@@ -215,14 +229,14 @@ fn impl_get_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> Token
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
 /// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
 /// ```
-fn impl_set_variant(ast: &DeriveInput, types: &HashMap<&Ident, &Ident>) -> TokenStream {
+fn impl_set_variant(ast: &DeriveInput, types: &HashMap<String, &Ident>) -> TokenStream {
     let name = &ast.ident.to_string();
     let mut piece = String::new();
-    for (_type, field_) in types.iter() {
-        piece.push_str(&format!("impl SetVariant<{}> for {}", _type.to_string(), name));
+    for (type_, field_) in types.iter() {
+        piece.push_str(&format!("impl SetVariant<{}> for {}", type_, name));
         piece.push_str(" { ");
         piece.push_str(&format!(" fn set_variant(&mut self, value: {})",
-                                _type.to_string()));
+                                type_));
         piece.push_str("{ ");
         piece.push_str(&format!("*self = {}::{}(value);", name, field_));
         piece.push_str("} } ");

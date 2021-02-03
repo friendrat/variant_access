@@ -40,6 +40,26 @@ enum AmbiguousTest {
     F2(i64)
 }
 
+#[derive(Debug, PartialEq)]
+struct Complex {
+    field_one: bool,
+    field_two: f64
+}
+
+mod namespace {
+    #[derive(Debug, PartialEq)]
+    pub struct Complex {
+        field_one: bool,
+        field_two: f64
+    }
+}
+
+#[derive(VariantAccess, PartialEq, Debug)]
+enum ComplexEnum {
+    F1(Complex),
+    F2(namespace::Complex)
+}
+
 #[test]
 fn test_has_variant() {
     let test = Test::F1(42);

@@ -60,8 +60,8 @@ impl fmt::Display for VariantAccessError {
 /// let result = instance.contains_variant::<i32>(); // result has value Err
 /// ```
 pub trait ContainsVariant {
-    fn has_variant<T>(&self) -> bool;
-    fn contains_variant<T>(&self) -> Result<bool, VariantAccessError>;
+    fn has_variant<T: 'static>(&self) -> bool;
+    fn contains_variant<T: 'static>(&self) -> Result<bool, VariantAccessError>;
 
 }
 

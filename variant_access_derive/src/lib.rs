@@ -31,7 +31,8 @@ fn parse_path(path: &syn::Path) -> String {
     let lifetime_index = fullname
         .find('<');
     if let Some(_) = lifetime_index {
-       panic!("Variant access can only be derived for types subscribing to 'static, (i.e. cannot depend on lifetime parameters)")
+        panic!("Variant access cannot be derived for template types");
+       //panic!("Variant access can only be derived for types subscribing to 'static, (i.e. cannot depend on lifetime parameters)")
     }
     fullname
 }

@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/enum_with_named_subfields.rs:3:10
+  |
+3 | #[derive(VariantAccess)]
+  |          ^^^^^^^^^^^^^
+  |
+  = help: message: Cannot derive VariantAccess for enums whose types have named fields.

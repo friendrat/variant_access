@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/twice_used_field_type.rs:3:10
+  |
+3 | #[derive(VariantAccess)]
+  |          ^^^^^^^^^^^^^
+  |
+  = help: message: Cannot derive VariantAccess for enum with multiple fields of same type

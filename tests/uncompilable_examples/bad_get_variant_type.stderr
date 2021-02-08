@@ -1,0 +1,9 @@
+error[E0277]: the trait bound `Enum: GetVariant<i32, _>` is not satisfied
+  --> $DIR/bad_get_variant_type.rs:12:56
+   |
+12 |     let _: Result<&i32, VariantAccessError> = instance.get_variant();
+   |                                                        ^^^^^^^^^^^ the trait `GetVariant<i32, _>` is not implemented for `Enum`
+   |
+   = help: the following implementations were found:
+             <Enum as GetVariant<bool, F2>>
+             <Enum as GetVariant<i64, F1>>

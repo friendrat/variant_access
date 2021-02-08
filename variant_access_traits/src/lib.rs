@@ -62,7 +62,6 @@ impl fmt::Display for VariantAccessError {
 pub trait ContainsVariant {
     fn has_variant<T: 'static>(&self) -> bool;
     fn contains_variant<T: 'static>(&self) -> Result<bool, VariantAccessError>;
-
 }
 
 
@@ -72,11 +71,12 @@ pub trait ContainsVariant {
 /// as the specified type. Otherwise, an Err should be returned. It is intended to use this function
 /// in conjunction with has_variant / contains_variant to know that safe unwrapping can occur.
 ///
-/// get_variant_mut is similar except it is for return a mutable reference to the raw value of the
+/// get_variant_mut is similar except it is for returning a mutable reference to the raw value of the
 /// active field.
 ///
 /// # Example:
 /// ```
+/// #[derive(VariantAccess)]
 /// enum Enum {
 ///     F1(i64),
 ///     F2(bool)
@@ -88,7 +88,7 @@ pub trait ContainsVariant {
 /// // let inner: &i32 = instance.get_variant::<i32>().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
 /// ```
 /// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
-pub trait GetVariant<T> {
+pub trait GetVariant<T, Marker> {
     fn get_variant(&self) -> Result<&T, VariantAccessError>;
     fn get_variant_mut(&mut self) -> Result<&mut T, VariantAccessError>;
 }
@@ -109,7 +109,7 @@ pub trait GetVariant<T> {
 /// let mut instance = Enum::F1(42);
 ///
 /// instance.set_variant(false); // instance now is equal to Enum::F2(false)
-/// // instance.set_variant(""); will not compile as Enum has not field of type &str
+/// // instance.set_variant(""); will not compile as Enum has no field of type &str
 /// ```
 /// This method uses type inference to try and determine which field to use. However this can
 /// be ambiguuous sometimes.
@@ -128,6 +128,6 @@ pub trait GetVariant<T> {
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
 /// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
 /// ```
-pub trait SetVariant<T> {
+pub trait SetVariant<T, Marker> {
     fn set_variant(&mut self, value: T);
 }

@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/input_not_enum.rs:3:10
+  |
+3 | #[derive(VariantAccess)]
+  |          ^^^^^^^^^^^^^
+  |
+  = help: message: Can only derive VariantAccess for enums.

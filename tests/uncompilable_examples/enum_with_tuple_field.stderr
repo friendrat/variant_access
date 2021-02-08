@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/enum_with_tuple_field.rs:3:10
+  |
+3 | #[derive(VariantAccess)]
+  |          ^^^^^^^^^^^^^
+  |
+  = help: message: Can only derive for enums whose types do not contain multiple fields.

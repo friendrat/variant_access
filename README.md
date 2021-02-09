@@ -85,4 +85,83 @@ and field tags will also be auto-generated and thus opaque to any user. Thus a u
 knowledge of field names allows the use of such auto-generated types, without being over burdensome to the end user.
 
 As an example, code-generated from protobuf schemas by default make all 
-inner values private and provide getters and setters to uniformize interaction with these entities. 
+inner values private and provide getters and setters to uniformize interaction with these entities.
+
+## Supported features
+
+The derive macro is able to fully distinguish types, even those with the same name but in different modules. The full 
+namespace resolution is acheived by using ``` std::any::TypeId```. For example
+```rust
+#[derive(Debug, PartialEq)]
+ pub struct Complex {
+    field_one: bool,
+    field_two: f64
+ }
+
+ pub mod namespace {
+    
+    #[derive(Debug, PartialEq)]
+    pub struct Complex {
+        pub field_one: bool,
+        pub field_two: f64
+    }
+
+    #[derive(VariantAccess, PartialEq, Debug)]
+    pub enum ComplexEnum {
+        F1(Complex),
+        F2(super::Complex)
+    }
+}
+```
+works and the various trait methods can distinguish between the type ```Complex``` and ```namespace::Complex```.
+
+Generics are also supported. For example 
+```rust
+#[derive(PartialEq, Debug)]
+pub struct Test<T, U>{
+   inner: T,
+   outer: U,
+}
+
+#[derive(VariantAccess, PartialEq, Debug)]
+pub enum Enum<Y: 'static, X: 'static> {
+    F1(Y),
+    F2(Test<X, Y>)
+}
+``` 
+works and means that the instantiated trait methods will automatically work, e.g., for the 
+the type ```Enum<i64, bool>```. So for example, 
+```rust
+fn main() {
+    let test = Enum::<i64, bool>::F2(Test{inner: true, outer: 2});
+    let value: &Test<bool, i64> = test.get_variant().unwrap();
+    assert_eq!(value, Test{inner: true, outer: 2});
+}
+```
+In order to support enum definitions with more than one generic parameter, it was necessary to use
+marker structs to avoid conflicting definitions, see this [question](https://stackoverflow.com/questions/52281091/can-i-avoid-eager-ambiguity-resolution-for-trait-implementations-with-generics/52692592#52692592) on Stackoverflow.
+
+As such, in the above example, the following module and marker structs will also be created:
+```rust
+#[allow(non_snake_case)]
+mod variant_access_Enum {
+    pub (crate) struct F1;
+    pub (crate) struct F2;
+}
+```
+So beware in case you were thinking of creating the module ```variant_access_Enum``` yourself! :stuck_out_tongue_closed_eyes:
+
+## Type Requirements
+
+There are several requirements that your enum definition must satisfy in order for the traits and / or the 
+derive macro to work. First of all, all types must subscribe to `'static`. This is a requirement of ```std::any::TypeId```
+(as apparently it is difficult to distinguish to types that differ only in lifetime). Furthermore, this a trait bound
+for some of the variant_access traits. 
+
+This also means that when using generics in your enum definition, you must add the `'static` trait bound (see the 
+example in the previous section).
+
+For the derive macro to work, it is also necessary that all field types of the enum implement the `PartialEq` and `Debug`
+traits.
+
+For a more complete list of restrictions and misuses, see the `uncompilable_examples` subdirectory in the `tests` folder.

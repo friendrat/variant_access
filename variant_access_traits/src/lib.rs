@@ -83,11 +83,14 @@ pub trait ContainsVariant {
 /// }
 /// let instance = Enum::f1(42);
 ///
-/// let inner: &i64 = instance.get_variant::<i64>().unwrap(); // assigns &42 to inner_value
-/// // let inner: &bool = instance.get_variant::<bool>().unwrap() // panics because of unhandled Err.
-/// // let inner: &i32 = instance.get_variant::<i32>().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
+/// let inner: &i64 = instance.get_variant().unwrap(); // assigns &42 to inner_value
+/// // let inner: &bool = instance.get_variant().unwrap() // panics because of unhandled Err.
+/// // let inner: &i32 = instance.get_variant().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
 /// ```
 /// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
+///
+/// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
+/// this trait for enums with more than one generic parameter in order to avoid definition clashes.
 pub trait GetVariant<T, Marker> {
     fn get_variant(&self) -> Result<&T, VariantAccessError>;
     fn get_variant_mut(&mut self) -> Result<&mut T, VariantAccessError>;
@@ -128,6 +131,9 @@ pub trait GetVariant<T, Marker> {
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
 /// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
 /// ```
+///
+/// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
+/// this trait for enums with more than one generic parameter in order to avoid definition clashes.
 pub trait SetVariant<T, Marker> {
     fn set_variant(&mut self, value: T);
 }

@@ -26,7 +26,7 @@ pub fn variant_access_derive(input: TokenStream) -> TokenStream {
 /// # Example
 /// ```
 /// #[derive(VariantAccess)]
-/// enum Enum<T, X> {
+/// enum Enum<T: 'static, X: 'static> {
 ///     F1(T),
 ///     F2(X)
 /// }
@@ -75,7 +75,7 @@ fn fetch_name_with_generic_params(ast: &DeriveInput) -> (String, Vec<String>) {
 }
 
 /// Determines the full path of a type including all of its nested namespaces.
-/// This is used later to ensure that the derive method can work with full
+/// This is used later to ensure that the derive macro can work with full
 /// namespace resolution.
 ///
 /// # Exmample

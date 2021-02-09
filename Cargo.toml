@@ -1,6 +1,6 @@
 [package]
 name = "variant_access"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Jacob Turner <jacob@friendrat.com> "]
 edition = "2018"
 readme = "README.md"
@@ -23,8 +23,8 @@ members = [
 [dependencies]
 syn = {version= "1.0", features=["derive"]}
 quote = "1.0"
-variant_access_traits = {path = "variant_access_traits"} #"0.1.1"
-variant_access_derive = {path = "variant_access_derive"} #"0.1.1"
+variant_access_traits = "0.2.0"
+variant_access_derive = "0.2.0"
 
 [dev-dependencies]
 trybuild = "1.0.40"

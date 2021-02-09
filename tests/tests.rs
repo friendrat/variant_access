@@ -185,9 +185,9 @@ mod test_template_types {
     fn test_contains_variant(){
         let test = Enum::<i64, bool>::F1(42);
         assert!(test.contains_variant::<i64>().expect("Test failed"));
-        assert!(!test.contains_variant::<bool>().expect("Test failed"));
+        assert!(!test.contains_variant::<Test<bool, i64>>().expect("Test failed"));
         let test = Enum::<i32, bool>::F2(Test::<bool, i32>{inner: true, outer: 2});
-        assert!(!test.contains_variant::<Test<i32, bool>>().expect("Test failed"));
+        assert!(!test.contains_variant::<i32>().expect("Test failed"));
         assert!(test.contains_variant::<Test<bool, i32>>().expect("Test failed"));
     }
 

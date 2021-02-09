@@ -1,0 +1,17 @@
+error[E0369]: binary operation `==` cannot be applied to type `Test<X, Y>`
+  --> $DIR/type_does_not_implement_partialeq.rs:13:8
+   |
+13 |     F2(Test<X, Y>)
+   |        ^^^^^^^^^^
+   |
+   = note: an implementation of `std::cmp::PartialEq` might be missing for `Test<X, Y>`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0369]: binary operation `!=` cannot be applied to type `Test<X, Y>`
+  --> $DIR/type_does_not_implement_partialeq.rs:13:8
+   |
+13 |     F2(Test<X, Y>)
+   |        ^^^^^^^^^^
+   |
+   = note: an implementation of `std::cmp::PartialEq` might be missing for `Test<X, Y>`
+   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)

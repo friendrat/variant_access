@@ -1,0 +1,7 @@
+error: proc-macro derive panicked
+ --> $DIR/non_static_lifetime_parameter.rs:3:10
+  |
+3 | #[derive(VariantAccess, PartialEq, Debug)]
+  |          ^^^^^^^^^^^^^
+  |
+  = help: message: VariantAccess can only be derived for types with static lifetimes

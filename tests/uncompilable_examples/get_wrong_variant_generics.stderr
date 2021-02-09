@@ -1,0 +1,9 @@
+error[E0277]: the trait bound `Enum<i64, bool>: variant_access_traits::GetVariant<bool, _>` is not satisfied
+  --> $DIR/get_wrong_variant_generics.rs:18:25
+   |
+18 |     let _: &bool = test.get_variant().expect("");
+   |                         ^^^^^^^^^^^ the trait `variant_access_traits::GetVariant<bool, _>` is not implemented for `Enum<i64, bool>`
+   |
+   = help: the following implementations were found:
+             <Enum<Y, X> as variant_access_traits::GetVariant<Test<X, Y>, F2>>
+             <Enum<Y, X> as variant_access_traits::GetVariant<Y, F1>>

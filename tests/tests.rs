@@ -157,6 +157,17 @@ mod test_compile_failures {
 }
 
 #[cfg(test)]
+/// A hand coded example that closely resembles the code produced by the derive macro has been
+/// included. This test ensures its correctness.
+mod test_handwritten_example {
+    #[test]
+    fn test_handwritten_example() {
+        let t = trybuild::TestCases::new();
+        t.pass("tests/full_example.rs");
+    }
+}
+
+#[cfg(test)]
 mod test_template_types {
     use super::*;
     use std::fmt::Debug;

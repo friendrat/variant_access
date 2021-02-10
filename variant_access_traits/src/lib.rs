@@ -91,7 +91,7 @@ pub trait ContainsVariant {
 ///
 /// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
 /// this trait for enums with more than one generic parameter in order to avoid definition clashes.
-pub trait GetVariant<T, Marker> {
+pub trait GetVariant<T, Marker=()> {
     fn get_variant(&self) -> Result<&T, VariantAccessError>;
     fn get_variant_mut(&mut self) -> Result<&mut T, VariantAccessError>;
 }
@@ -134,6 +134,6 @@ pub trait GetVariant<T, Marker> {
 ///
 /// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
 /// this trait for enums with more than one generic parameter in order to avoid definition clashes.
-pub trait SetVariant<T, Marker> {
+pub trait SetVariant<T, Marker=()> {
     fn set_variant(&mut self, value: T);
 }

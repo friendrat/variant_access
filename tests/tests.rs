@@ -1,4 +1,4 @@
-use variant_access_traits::{ContainsVariant, GetVariant, SetVariant, VariantAccessError};
+use variant_access_traits::*;
 use variant_access_derive::*;
 
 
@@ -152,7 +152,6 @@ mod test_compile_failures {
         t.compile_fail("tests/uncompilable_examples/twice_used_field_type.rs");
         t.compile_fail("tests/uncompilable_examples/type_does_not_implement_debug.rs");
         t.compile_fail("tests/uncompilable_examples/type_does_not_implement_partialeq.rs");
-
     }
 }
 
@@ -228,17 +227,9 @@ mod test_template_types {
     }
 
     #[test]
-    //#[should_panic]
-    fn test_get_variant_mut_error_from_wrong_variant()  {
-        //let test = Enum::<i64, bool>::F1(42);
-        //let _: &mut bool = test.get_variant_mut().expect("");
-    }
-
-    #[test]
-    fn test_set_variant(){
-        let mut test = Enum::<i64, bool>::F2(Test::<bool, i64>{inner: true, outer: 2});
+    fn test_set_variant() {
+        let mut test = Enum::<i64, bool>::F2(Test::<bool, i64> { inner: true, outer: 2 });
         test.set_variant(42);
         assert_eq!(test, Enum::<i64, bool>::F1(42));
     }
-
 }

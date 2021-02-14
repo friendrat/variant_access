@@ -1,4 +1,4 @@
-use variant_access_traits::{ContainsVariant, GetVariant, SetVariant, VariantAccessError};
+use variant_access_traits::*;
 use variant_access_derive::*;
 
 #[derive(VariantAccess)]

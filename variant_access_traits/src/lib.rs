@@ -125,7 +125,7 @@ pub trait GetVariant<T, Marker=()> {
 /// }
 ///
 /// let mut instance = Enum::F1(42);
-/// instance.set_variante(1); // Is instance equal to Enum::F1(1) or Enum::F2(1) ???
+/// instance.set_variant(1); // Is instance equal to Enum::F1(1) or Enum::F2(1) ???
 ///
 /// // Do this instead
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
@@ -136,4 +136,13 @@ pub trait GetVariant<T, Marker=()> {
 /// this trait for enums with more than one generic parameter in order to avoid definition clashes.
 pub trait SetVariant<T, Marker=()> {
     fn set_variant(&mut self, value: T);
+}
+
+
+pub trait CreateVariantFrom<T, Marker=()> {
+    fn create_variant_from(value: T) -> Self;
+}
+
+pub fn create_variant_from<T: CreateVariantFrom<U>, U>(value: U) -> T {
+    T::create_variant_from(value)
 }

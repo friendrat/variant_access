@@ -1,6 +1,5 @@
 use variant_access_traits::*;
 
-
 /// This hand written example closely resembles the code produced by the derive macro.
 /// It has been included to demonstrate how the traits work under the hood and perhaps
 /// inspire others in how they might write these traits themselves.
@@ -26,7 +25,7 @@ impl ContainsVariant for Enum {
         if self.has_variant::<T>() {
             match &self {
                 Enum::F1(_) => Ok(is_integral::<T>()),
-                Enum::F2(_) => Ok(is_float::<T>())
+                Enum::F2(_) => Ok(is_float::<T>()),
             }
         } else {
             Err(VariantAccessError::invalid_type("Enum", std::any::type_name::<T>()))
@@ -75,6 +74,18 @@ impl SetVariant<i64> for Enum {
 impl SetVariant<f64> for Enum {
     fn set_variant(&mut self, value: f64) {
         *self = Enum::F2(value);
+    }
+}
+
+impl CreateVariantFrom<i64> for Enum {
+    fn create_variant_from(value: i64) -> Enum {
+        Enum::F1(value)
+    }
+}
+
+impl CreateVariantFrom<f64> for Enum {
+    fn create_variant_from(value: f64) -> Enum {
+        Enum::F2(value)
     }
 }
 

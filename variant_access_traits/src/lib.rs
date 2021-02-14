@@ -47,6 +47,10 @@ impl fmt::Display for VariantAccessError {
 ///
 /// # Example
 /// ```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// #[derive(VariantAccess)]
 ///enum Enum {
 ///    F1(i64),
 ///    F2(bool)
@@ -54,7 +58,7 @@ impl fmt::Display for VariantAccessError {
 /// let result: bool = has_variant::<i64>(); // assigns true to result
 /// let result: bool = has_variant::<i32>(); // assigns false to result
 ///
-/// let instance = Enum::f1(42);
+/// let instance = Enum::F1(42);
 /// let result = instance.contains_variant::<i64>(); // result has value Ok(true)
 /// let result = instance.contains_variant::<bool>(); // result has value Ok(false)
 /// let result = instance.contains_variant::<i32>(); // result has value Err
@@ -76,6 +80,9 @@ pub trait ContainsVariant {
 ///
 /// # Example:
 /// ```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
 /// #[derive(VariantAccess)]
 /// enum Enum {
 ///     F1(i64),
@@ -105,6 +112,10 @@ pub trait GetVariant<T, Marker=()> {
 /// match the type of any field, the program will not compile.
 /// # Example:
 /// ```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// #[derive(VariantAccess)]
 /// enum Enum {
 ///     F1(i64),
 ///     F2(bool)
@@ -119,6 +130,10 @@ pub trait GetVariant<T, Marker=()> {
 ///
 /// # Example:
 /// ```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// #[derive(VariantAccess)]
 /// enum Enum {
 ///     F1(i32),
 ///     F2(i64)
@@ -138,11 +153,53 @@ pub trait SetVariant<T, Marker=()> {
     fn set_variant(&mut self, value: T);
 }
 
-
+/// This trait allows one to create a new instance of an enum from a value whose type matches one
+/// of the types of the field of the enum.
+/// # Example:
+///```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// enum Enum {
+///     F1(i64),
+///     F2(bool)
+/// }
+///
+/// let instance = Enum::create_from(false); // instance is now equal to Enum::F2(false)
+/// // let instance = Enum::create_from("") // will not compile as Enum has no field of type &str
+///```
+/// Similar to the `SetVariant`, the `as` keyword should be used in the case of ambiguous typing.
+///
+/// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
+/// this trait for enums with more than one generic parameter in order to avoid definition clashes.
 pub trait CreateVariantFrom<T, Marker=()> {
     fn create_variant_from(value: T) -> Self;
 }
 
-pub fn create_variant_from<T: CreateVariantFrom<U>, U>(value: U) -> T {
+/// This function allows the user to call a type's `create_variant_from` trait method without
+/// explicitly naming the type:
+///
+/// # Example:
+/// ```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// #[(VariantAccessDerive)]
+/// enum HorribleComputerGeneratedEnumName {
+///     AwfulComputerGeneratedField1(f64),
+///     AwfulComputerGeneratedField2(bool)
+/// }
+///
+/// struct LovelyStruct {
+///     lovely_field_name: HorribleComputerGeneratedEnumName
+/// }
+///
+/// fn main() {
+///     let lovely = LovelyStruct{lovely_field_name: create_variant_from(3.0)};
+///     // let lovely = LovelyStruct{ lovely_field_name: create_variant_from("")}; //will not compile
+/// }
+///
+/// ```
+pub fn create_variant_from<T: CreateVariantFrom<U, Marker>, Marker, U>(value: U) -> T {
     T::create_variant_from(value)
 }

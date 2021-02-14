@@ -31,7 +31,7 @@ The above code first checks that instance has a field of type `i32`, then checks
 and then gets a reference to the raw value contained therein.
 
 In general, the traits provided in this crate give the following functionality to enums:
-``` rust
+```rust
 let mut instance = ...;
 
 // determines whether on of the possible fields has type T
@@ -60,20 +60,28 @@ instance.set_variant(false);
 // Otherwise the outcome will be ambiguous to the user.
 instance.set_variant(3 as i64);
 ```
-For basic enum types, these traits can be derived using the `derive_variant_access` macro. This macro
-derives all the traits in this crate. 
+For enum types (subject to certain restrictions detailed in the Type Requirements section below), these traits can be
+ derived using the `derive_variant_access` macro. This macro derives all the traits in this crate. 
 ``` rust
+use variant_access_traits::*;
+use variant_access_derive::*; 
 #[derive(VariantAccess)]
 enum Enum {
     F1(i32),
     F2(bool)
 }
 ``` 
-A lot of restrictions apply in order for this macro to succeed. First of all, it can only be applied to enums.
+Note that we recommend to always add 
+ ```rust
+use variant_access_traits::*;
+use variant_access_derive::*; 
+``` 
+to use these features.
+
+Several restrictions apply in order for this macro to succeed. First of all, it can only be applied to enums.
 Secondly, each field must have a unique type. If any field of the enum itself has more than one field or any 
 named fields, the macro will not work (this may be expanded in the future). If any of these conditions are not met,
-the code will not compile. This crate is meant for Rust enums that closely resemble C++ variants with only primitive
-types.
+the code will not compile.
 ## Motivation
 
 Out of the box, accessing the active fields in a Rust enum requires direct use of the tags used for the active field.
@@ -90,7 +98,7 @@ inner values private and provide getters and setters to uniformize interaction w
 ## Supported features
 
 The derive macro is able to fully distinguish types, even those with the same name but in different modules. The full 
-namespace resolution is acheived by using ``` std::any::TypeId```. For example
+namespace resolution is achieved by using ``` std::any::TypeId```. For example
 ```rust
 #[derive(Debug, PartialEq)]
  pub struct Complex {
@@ -151,6 +159,30 @@ mod variant_access_Enum {
 ```
 So beware in case you were thinking of creating the module ```variant_access_Enum``` yourself! :stuck_out_tongue_closed_eyes:
 
+We also provide a trait and function for creating instance of variants given a value of a certain type. Consider the
+ following example:
+ ```rust
+ use variant_access_traits::*;
+ use variant_access_derive::*;
+
+ #[(VariantAccessDerive)]
+ enum HorribleComputerGeneratedEnumName {
+     AwfulComputerGeneratedField1(f64),
+     AwfulComputerGeneratedField2(bool)
+ }
+
+ struct LovelyStruct {
+     lovely_field_name: HorribleComputerGeneratedEnumName
+ }
+
+ fn main() {
+     let lovely = LovelyStruct{lovely_field_name: create_variant_from(3.0)};
+ }
+
+```
+The `create_variant_from` function is able to deduce that since `lovely_field_name` is of type `HorribleComputerGeneratedEnumName`
+and the input to the function is an `f64`, that it should return `HorribleComputerGeneratedEnumName::AwfulComputerGeneratedField1(3.0)`.
+This example goes back to the original motivation of this crate.
 ## Type Requirements
 
 There are several requirements that your enum definition must satisfy in order for the traits and / or the 
@@ -165,3 +197,8 @@ For the derive macro to work, it is also necessary that all field types of the e
 traits.
 
 For a more complete list of restrictions and misuses, see the `uncompilable_examples` subdirectory in the `tests` folder.
+
+## Known Issues
+Currently, the only main known issue involves running the test suite for this crate. `cargo test` fails due to an
+issue in `trybuild` and Rust workspaces. I have been unable to resolve it, but running the tests one by one
+via `cargo test --package variant_access --test tests {{test name}}` ensures that all are passing. 

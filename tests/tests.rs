@@ -18,6 +18,15 @@ mod test_basic {
         F2(i64)
     }
 
+    #[derive(Debug, PartialEq)]
+    struct TestStruct {
+        field: Test
+    }
+
+    #[derive(Debug, PartialEq)]
+    struct AmbiguousStruct {
+        field: AmbiguousTest
+    }
 
     #[test]
     fn test_has_variant() {
@@ -61,7 +70,6 @@ mod test_basic {
         let _: &bool = test.get_variant().expect("");
     }
 
-
     #[test]
     fn test_get_variant_mut() {
         let mut test = Test::F1(42);
@@ -89,6 +97,30 @@ mod test_basic {
         let mut test = AmbiguousTest::F1(42);
         test.set_variant(42 as i64);
         assert_eq!(test, AmbiguousTest::F2(42));
+    }
+
+    #[test]
+    fn test_trait_create_variant_from() {
+        let test = Test::create_variant_from(2);
+        assert_eq!(test, Test::F1(2));
+    }
+
+    #[test]
+    fn test_trait_create_variant_from_ambiguous() {
+        let test = AmbiguousTest::create_variant_from(42 as i64);
+        assert_eq!(test, AmbiguousTest::F2(42));
+    }
+
+    #[test]
+    fn test_func_create_variant_from() {
+        let test = TestStruct{field: create_variant_from(2)};
+        assert_eq!(test, TestStruct{field: Test::F1(2)});
+    }
+
+    #[test]
+    fn test_func_create_variant_from_ambiguous() {
+        let test = AmbiguousStruct{field: create_variant_from(42 as i64)};
+        assert_eq!(test, AmbiguousStruct{field: AmbiguousTest::F2(42)});
     }
 }
 
@@ -142,7 +174,9 @@ mod test_compile_failures {
     #[test]
     fn test_uncompilable_examples() {
         let t = trybuild::TestCases::new();
+        t.compile_fail("tests/uncompilable_examples/bad_func_create_variant_from_type.rs");
         t.compile_fail("tests/uncompilable_examples/bad_get_variant_type.rs");
+        t.compile_fail("tests/uncompilable_examples/bad_trait_create_variant_from_type.rs");
         t.compile_fail("tests/uncompilable_examples/enum_with_named_subfields.rs");
         t.compile_fail("tests/uncompilable_examples/enum_with_tuple_field.rs");
         t.compile_fail("tests/uncompilable_examples/get_wrong_variant_generics.rs");
@@ -182,6 +216,9 @@ mod test_template_types {
         F1(Y),
         F2(Test<X, Y>)
     }
+
+    #[derive(PartialEq, Debug)]
+    pub struct Wrapper(Enum<i64, bool>);
 
     #[test]
     fn test_has_variant() {
@@ -231,5 +268,17 @@ mod test_template_types {
         let mut test = Enum::<i64, bool>::F2(Test::<bool, i64> { inner: true, outer: 2 });
         test.set_variant(42);
         assert_eq!(test, Enum::<i64, bool>::F1(42));
+    }
+
+    #[test]
+    fn test_trait_create_variant_from() {
+        let test = Enum::<i64, bool>::create_variant_from(Test{inner: true, outer: 2});
+        assert_eq!(test, Enum::<i64, bool>::F2(Test{inner: true, outer: 2}));
+    }
+
+    #[test]
+    fn test_func_create_variant_from() {
+        let test = Wrapper(create_variant_from(Test{inner: true, outer: 2}));
+        assert_eq!(test, Wrapper(Enum::<i64, bool>::F2(Test{inner: true, outer: 2})));
     }
 }

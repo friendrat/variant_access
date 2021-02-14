@@ -376,7 +376,25 @@ fn impl_set_variant(ast: &DeriveInput,
     impl_string.parse().unwrap()
 }
 
-
+/// This trait allows one to create a new instance of an enum from a value whose type matches one
+/// of the types of the field of the enum.
+/// # Example:
+///```
+/// use variant_access_traits::*;
+/// use variant_access_derive::*;
+///
+/// enum Enum {
+///     F1(i64),
+///     F2(bool)
+/// }
+///
+/// let instance = Enum::create_from(false); // instance is now equal to Enum::F2(false)
+/// // let instance = Enum::create_from("") // will not compile as Enum has no field of type &str
+///```
+/// Similar to the `SetVariant`, the `as` keyword should be used in the case of ambiguous typing.
+///
+/// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
+/// this trait for enums with more than one generic parameter in order to avoid definition clashes.
 fn impl_create_variant(ast: &DeriveInput,
                             name: &str,
                             params: &[String],

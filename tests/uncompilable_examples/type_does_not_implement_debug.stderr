@@ -9,3 +9,11 @@ error[E0277]: `Test<X, Y>` doesn't implement `Debug`
    = note: required because of the requirements on the impl of `Debug` for `&Test<X, Y>`
    = note: required for the cast to the object type `dyn Debug`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `variant_access_traits`
+ --> $DIR/type_does_not_implement_debug.rs:2:5
+  |
+2 | use variant_access_traits::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

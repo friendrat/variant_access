@@ -8,3 +8,11 @@ error[E0310]: the parameter type `X` may not live long enough
   |          help: consider adding an explicit lifetime bound...: `X: 'static`
   |
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `variant_access_traits`
+ --> $DIR/non_static_templates.rs:2:5
+  |
+2 | use variant_access_traits::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

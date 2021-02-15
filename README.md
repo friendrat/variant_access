@@ -63,20 +63,13 @@ instance.set_variant(3 as i64);
 For enum types (subject to certain restrictions detailed in the Type Requirements section below), these traits can be
  derived using the `derive_variant_access` macro. This macro derives all the traits in this crate. 
 ``` rust
-use variant_access_traits::*;
 use variant_access_derive::*; 
 #[derive(VariantAccess)]
 enum Enum {
     F1(i32),
     F2(bool)
 }
-``` 
-Note that we recommend to always add 
- ```rust
-use variant_access_traits::*;
-use variant_access_derive::*; 
-``` 
-to use these features.
+```
 
 Several restrictions apply in order for this macro to succeed. First of all, it can only be applied to enums.
 Secondly, each field must have a unique type. If any field of the enum itself has more than one field or any 

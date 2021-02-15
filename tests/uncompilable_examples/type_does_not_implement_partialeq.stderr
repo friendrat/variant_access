@@ -15,3 +15,11 @@ error[E0369]: binary operation `!=` cannot be applied to type `Test<X, Y>`
    |
    = note: an implementation of `std::cmp::PartialEq` might be missing for `Test<X, Y>`
    = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: unused import: `variant_access_traits`
+ --> $DIR/type_does_not_implement_partialeq.rs:2:5
+  |
+2 | use variant_access_traits::*;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default

@@ -8,20 +8,17 @@ use std::any::type_name;
 #[allow(unused_imports)]
 use std::iter::Enumerate;
 
-use std::collections::HashMap;
 use proc_macro::TokenStream;
-use syn::{self, Ident, Data, DeriveInput, GenericParam};
-use quote::{ToTokens};
+use quote::ToTokens;
+use std::collections::HashMap;
+use syn::{self, Data, DeriveInput, GenericParam, Ident};
 use tera::*;
-
-
 
 #[proc_macro_derive(VariantAccess)]
 pub fn variant_access_derive(input: TokenStream) -> TokenStream {
     let ast = syn::parse(input).unwrap();
     impl_variant_access(&ast)
 }
-
 
 /// If the decorated enum has generic template parameters, we determine those here.
 /// We also validate that there are no lifetime parameters. If there are, the
@@ -50,26 +47,27 @@ pub fn variant_access_derive(input: TokenStream) -> TokenStream {
 /// This function panics on the above example.
 fn fetch_name_with_generic_params(ast: &DeriveInput) -> (String, Vec<String>) {
     let mut param_string = String::from("");
-    let params: Vec<String> = ast.generics.params
+    let params: Vec<String> = ast
+        .generics
+        .params
         .iter()
-        .filter_map(|param|
-            match param {
-                GenericParam::Lifetime(inner) => {
-                    if inner.lifetime.ident.to_token_stream().to_string() != String::from("static") {
-                        panic!("VariantAccess can only be derived for types with static lifetimes");
-                    } else {
-                        None
-                    }
+        .filter_map(|param| match param {
+            GenericParam::Lifetime(inner) => {
+                if inner.lifetime.ident.to_token_stream().to_string() != String::from("static") {
+                    panic!("VariantAccess can only be derived for types with static lifetimes");
+                } else {
+                    None
                 }
-                GenericParam::Type(inner) => {
-                    param_string.push_str(&format!("{},", inner.ident.to_string()));
-                    Some(inner.ident.to_string())
-                },
-                GenericParam::Const(inner) => {
-                    param_string.push_str(&format!("{},", inner.ident.to_string()));
-                    Some(inner.ident.to_string())
-                }
-            })
+            }
+            GenericParam::Type(inner) => {
+                param_string.push_str(&format!("{},", inner.ident.to_string()));
+                Some(inner.ident.to_string())
+            }
+            GenericParam::Const(inner) => {
+                param_string.push_str(&format!("{},", inner.ident.to_string()));
+                Some(inner.ident.to_string())
+            }
+        })
         .collect();
     param_string.pop();
     if !params.is_empty() {
@@ -77,7 +75,6 @@ fn fetch_name_with_generic_params(ast: &DeriveInput) -> (String, Vec<String>) {
     } else {
         (ast.ident.to_string(), params)
     }
-
 }
 
 /// Determines the full path of a type including all of its nested namespaces.
@@ -110,17 +107,16 @@ fn fetch_name_with_generic_params(ast: &DeriveInput) -> (String, Vec<String>) {
 /// `F2` is `Complex`.
 fn parse_path(path: &syn::Path) -> String {
     let mut fullname = String::from("");
-    let _ = path.segments.pairs()
-        .map(|segment| {
-            fullname.push_str(&segment.to_token_stream().to_string())
-        } )
+    let _ = path
+        .segments
+        .pairs()
+        .map(|segment| fullname.push_str(&segment.to_token_stream().to_string()))
         .collect::<()>();
 
     // remove extraneous whitespace
     fullname.retain(|c| c != ' ');
     fullname
 }
-
 
 /// Makes a map of the form < field type : field name >
 ///
@@ -164,8 +160,7 @@ fn fetch_types_from_enum(ast: &DeriveInput) -> HashMap<String, &Ident> {
 
     if let Data::Enum(data) = &ast.data {
         for var in data.variants.iter() {
-
-            if let syn::Fields::Unnamed(field_) = &var.fields{
+            if let syn::Fields::Unnamed(field_) = &var.fields {
                 if field_.unnamed.len() > 1 {
                     panic!("Can only derive for enums whose types do not contain multiple fields.");
                 }
@@ -234,14 +229,19 @@ fn create_marker_structs(name: &str, types: &HashMap<String, &Ident>) -> TokenSt
 /// let result = instance.contains_variant::<bool>(); // result has value Ok(false)
 /// let result = instance.contains_variant::<i32>(); // result has value Err
 /// ```
-fn impl_contains_variant(ast: &DeriveInput,
-                         name: &str,
-                         params: &[String],
-                         types: &HashMap<String, &Ident>,
-                         templater: &Tera) -> TokenStream {
+fn impl_contains_variant(
+    ast: &DeriveInput,
+    name: &str,
+    params: &[String],
+    types: &HashMap<String, &Ident>,
+    templater: &Tera,
+) -> TokenStream {
     // generic is a parameter name guaranteed not to be equal to the enum generic parameter names
     let (param_string, generic) = if !params.is_empty() {
-        (format!("<{}>", ast.generics.params.to_token_stream()), params.concat())
+        (
+            format!("<{}>", ast.generics.params.to_token_stream()),
+            params.concat(),
+        )
     } else {
         (String::from(""), String::from("T"))
     };
@@ -249,21 +249,31 @@ fn impl_contains_variant(ast: &DeriveInput,
     context.insert("generics", &param_string);
     context.insert("template", &generic);
     context.insert("fullname", &name);
-    context.insert("matches", &types
-        .keys()
-        .map(|type_| format!("std::any::TypeId::of::<{}>()", type_))
-        .collect::<Vec<String>>());
+    context.insert(
+        "matches",
+        &types
+            .keys()
+            .map(|type_| format!("std::any::TypeId::of::<{}>()", type_))
+            .collect::<Vec<String>>(),
+    );
 
-    context.insert("branches", &types
-        .iter()
-        .map(|(type_, field_)|
-            format!("{}::{}(_) => Ok(std::any::TypeId::of::<{}>()",
+    context.insert(
+        "branches",
+        &types
+            .iter()
+            .map(|(type_, field_)| {
+                format!(
+                    "{}::{}(_) => Ok(std::any::TypeId::of::<{}>()",
                     &ast.ident.to_string(),
                     field_.to_string(),
-                    type_))
-        .collect::<Vec<String>>());
+                    type_
+                )
+            })
+            .collect::<Vec<String>>(),
+    );
 
-    let impl_string = templater.render("contains_variant", &context)
+    let impl_string = templater
+        .render("contains_variant", &context)
         .expect("Failed to fill in ContainsVariant template");
 
     impl_string.parse().unwrap()
@@ -285,12 +295,13 @@ fn impl_contains_variant(ast: &DeriveInput,
 /// // let inner: &i32 = instance.get_variant().unwrap() // will not compile as GetVariant<i32> is not implemented for Enum.
 /// ```
 /// Works similarly for get_variant_mut if instance is mutable; returns mutable references instead.
-fn impl_get_variant(ast: &DeriveInput,
-                    name: &str,
-                    params: &[String],
-                    types: &HashMap<String, &Ident>,
-                    templater: &Tera) -> TokenStream {
-
+fn impl_get_variant(
+    ast: &DeriveInput,
+    name: &str,
+    params: &[String],
+    types: &HashMap<String, &Ident>,
+    templater: &Tera,
+) -> TokenStream {
     let mut impl_string = String::new();
     // Determines if we are implementing the trait over generics
     let generics = if !params.is_empty() {
@@ -300,22 +311,28 @@ fn impl_get_variant(ast: &DeriveInput,
     };
     for (type_, field_) in types.iter() {
         let mut context = Context::new();
-        context.insert("generics",&generics);
+        context.insert("generics", &generics);
         context.insert("Type", &type_);
-        context.insert("Marker", &format!("variant_access_{}::{}",
-                                         ast.ident.to_string(),
-                                         field_.to_string()));
+        context.insert(
+            "Marker",
+            &format!(
+                "variant_access_{}::{}",
+                ast.ident.to_string(),
+                field_.to_string()
+            ),
+        );
         context.insert("fullname", name);
         context.insert("name", &ast.ident.to_string());
         context.insert("field", &field_.to_string());
-        impl_string.push_str(&templater.render("get_variant", &context)
-            .expect("Failed to fill in GetVariant template"));
+        impl_string.push_str(
+            &templater
+                .render("get_variant", &context)
+                .expect("Failed to fill in GetVariant template"),
+        );
     }
 
     impl_string.parse().unwrap()
 }
-
-
 
 /// Implements the SetVariant trait that sets the
 /// tagged value of the field whose type matches the input value, if possible
@@ -348,12 +365,13 @@ fn impl_get_variant(ast: &DeriveInput,
 /// instance.set_variant(1 as i32); // instance equals Enum::F1(1)
 /// instance.set_variant(1 as i64); // instance equal Enum::F2(1)
 /// ```
-fn impl_set_variant(ast: &DeriveInput,
-                    name: &str,
-                    params: &[String],
-                    types: &HashMap<String, &Ident>,
-                    templater: &Tera) -> TokenStream {
-
+fn impl_set_variant(
+    ast: &DeriveInput,
+    name: &str,
+    params: &[String],
+    types: &HashMap<String, &Ident>,
+    templater: &Tera,
+) -> TokenStream {
     let mut impl_string = String::new();
     let generics = if !params.is_empty() {
         format!("<{}>", ast.generics.params.to_token_stream())
@@ -362,16 +380,24 @@ fn impl_set_variant(ast: &DeriveInput,
     };
     for (type_, field_) in types.iter() {
         let mut context = Context::new();
-        context.insert("generics",&generics);
+        context.insert("generics", &generics);
         context.insert("Type", &type_);
-        context.insert("Marker", &format!("variant_access_{}::{}",
-                                          ast.ident.to_string(),
-                                          field_.to_string()));
+        context.insert(
+            "Marker",
+            &format!(
+                "variant_access_{}::{}",
+                ast.ident.to_string(),
+                field_.to_string()
+            ),
+        );
         context.insert("fullname", name);
         context.insert("name", &ast.ident.to_string());
         context.insert("field", &field_.to_string());
-        impl_string.push_str(&templater.render("set_variant", &context)
-            .expect("Failed to fill in GetVariant template"));
+        impl_string.push_str(
+            &templater
+                .render("set_variant", &context)
+                .expect("Failed to fill in GetVariant template"),
+        );
     }
     impl_string.parse().unwrap()
 }
@@ -395,11 +421,13 @@ fn impl_set_variant(ast: &DeriveInput,
 ///
 /// This trait has a generic paramer `Marker` for adding marker structs. This is used if implementing
 /// this trait for enums with more than one generic parameter in order to avoid definition clashes.
-fn impl_create_variant(ast: &DeriveInput,
-                            name: &str,
-                            params: &[String],
-                            types: &HashMap<String, &Ident>,
-                            templater: &Tera) -> TokenStream {
+fn impl_create_variant(
+    ast: &DeriveInput,
+    name: &str,
+    params: &[String],
+    types: &HashMap<String, &Ident>,
+    templater: &Tera,
+) -> TokenStream {
     let mut impl_string = String::new();
     let generics = if !params.is_empty() {
         format!("<{}>", &ast.generics.params.to_token_stream())
@@ -410,27 +438,37 @@ fn impl_create_variant(ast: &DeriveInput,
         let mut context = Context::new();
         context.insert("generics", &generics);
         context.insert("Type", &type_);
-        context.insert("Marker", &format!("variant_access_{}::{}",
-                                          ast.ident.to_string(),
-                                          field_.to_string()));
+        context.insert(
+            "Marker",
+            &format!(
+                "variant_access_{}::{}",
+                ast.ident.to_string(),
+                field_.to_string()
+            ),
+        );
         context.insert("fullname", name);
         context.insert("name", &ast.ident.to_string());
         context.insert("field", &field_.to_string());
-        impl_string.push_str(&templater.render("create_variant", &context)
-                                 .expect("Failed to fill in CreateVariantFrom template"));
+        impl_string.push_str(
+            &templater
+                .render("create_variant", &context)
+                .expect("Failed to fill in CreateVariantFrom template"),
+        );
     }
     impl_string.parse().unwrap()
-
-
 }
 
 /// Implements ContainsVariant, GetVariant, SetVariant, and CreateVariantFrom traits
 fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     let mut tera = Tera::new("/dev/null/*").unwrap();
-    tera.add_raw_template("contains_variant", CONTAINS_VARIANT_TEMPLATE).unwrap();
-    tera.add_raw_template("get_variant", GET_VARIANT_TEMPLATE).unwrap();
-    tera.add_raw_template("set_variant", SET_VARIANT_TEMPLATE).unwrap();
-    tera.add_raw_template("create_variant", CREATE_VARIANT_TEMPLATE).unwrap();
+    tera.add_raw_template("contains_variant", CONTAINS_VARIANT_TEMPLATE)
+        .unwrap();
+    tera.add_raw_template("get_variant", GET_VARIANT_TEMPLATE)
+        .unwrap();
+    tera.add_raw_template("set_variant", SET_VARIANT_TEMPLATE)
+        .unwrap();
+    tera.add_raw_template("create_variant", CREATE_VARIANT_TEMPLATE)
+        .unwrap();
     let mut tokens: TokenStream = "".parse().unwrap();
 
     let (name, params) = fetch_name_with_generic_params(&ast);
@@ -443,4 +481,3 @@ fn impl_variant_access(ast: &DeriveInput) -> TokenStream {
     tokens.extend::<TokenStream>(impl_create_variant(&ast, &name, &params, &types, &tera));
     tokens
 }
-

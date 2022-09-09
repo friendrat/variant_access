@@ -1,16 +1,21 @@
 error[E0310]: the parameter type `X` may not live long enough
- --> $DIR/non_static_templates.rs:4:10
-  |
-4 | #[derive(VariantAccess, PartialEq, Debug)]
-  |          ^^^^^^^^^^^^^
-  |          |
-  |          ...so that the type `X` will meet its required lifetime bounds
-  |          help: consider adding an explicit lifetime bound...: `X: 'static`
-  |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+   --> tests/uncompilable_examples/non_static_templates.rs:4:10
+    |
+4   | #[derive(VariantAccess, PartialEq, Debug)]
+    |          ^^^^^^^^^^^^^
+    |          |
+    |          ...so that the type `X` will meet its required lifetime bounds...
+    |          help: consider adding an explicit lifetime bound...: `X: 'static`
+    |
+note: ...that is required by this bound
+   --> $RUST/core/src/any.rs
+    |
+    |     pub const fn of<T: ?Sized + 'static>() -> TypeId {
+    |                                 ^^^^^^^
+    = note: this error originates in the derive macro `VariantAccess` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 warning: unused import: `variant_access_traits`
- --> $DIR/non_static_templates.rs:2:5
+ --> tests/uncompilable_examples/non_static_templates.rs:2:5
   |
 2 | use variant_access_traits::*;
   |     ^^^^^^^^^^^^^^^^^^^^^

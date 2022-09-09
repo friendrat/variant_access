@@ -1,23 +1,45 @@
 error[E0369]: binary operation `==` cannot be applied to type `Test<X, Y>`
-  --> $DIR/type_does_not_implement_partialeq.rs:13:8
+  --> tests/uncompilable_examples/type_does_not_implement_partialeq.rs:13:8
    |
+10 | #[derive(VariantAccess, PartialEq, Debug)]
+   |                         --------- in this derive macro expansion
+...
 13 |     F2(Test<X, Y>)
    |        ^^^^^^^^^^
    |
-   = note: an implementation of `std::cmp::PartialEq` might be missing for `Test<X, Y>`
-   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+note: an implementation of `PartialEq<_>` might be missing for `Test<X, Y>`
+  --> tests/uncompilable_examples/type_does_not_implement_partialeq.rs:5:1
+   |
+5  | pub struct Test<T, U>{
+   | ^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq<_>`
+   = note: this error originates in the derive macro `PartialEq` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider annotating `Test<X, Y>` with `#[derive(PartialEq)]`
+   |
+5  | #[derive(PartialEq)]
+   |
 
 error[E0369]: binary operation `!=` cannot be applied to type `Test<X, Y>`
-  --> $DIR/type_does_not_implement_partialeq.rs:13:8
+  --> tests/uncompilable_examples/type_does_not_implement_partialeq.rs:13:8
    |
+10 | #[derive(VariantAccess, PartialEq, Debug)]
+   |                         --------- in this derive macro expansion
+...
 13 |     F2(Test<X, Y>)
    |        ^^^^^^^^^^
    |
-   = note: an implementation of `std::cmp::PartialEq` might be missing for `Test<X, Y>`
-   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+note: an implementation of `PartialEq<_>` might be missing for `Test<X, Y>`
+  --> tests/uncompilable_examples/type_does_not_implement_partialeq.rs:5:1
+   |
+5  | pub struct Test<T, U>{
+   | ^^^^^^^^^^^^^^^^^^^^^ must implement `PartialEq<_>`
+   = note: this error originates in the derive macro `PartialEq` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider annotating `Test<X, Y>` with `#[derive(PartialEq)]`
+   |
+5  | #[derive(PartialEq)]
+   |
 
 warning: unused import: `variant_access_traits`
- --> $DIR/type_does_not_implement_partialeq.rs:2:5
+ --> tests/uncompilable_examples/type_does_not_implement_partialeq.rs:2:5
   |
 2 | use variant_access_traits::*;
   |     ^^^^^^^^^^^^^^^^^^^^^

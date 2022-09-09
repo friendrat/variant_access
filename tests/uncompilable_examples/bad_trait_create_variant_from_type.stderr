@@ -1,5 +1,5 @@
 error[E0277]: the trait bound `Enum<i64, bool>: variant_access_traits::CreateVariantFrom<{float}, _>` is not satisfied
-  --> $DIR/bad_trait_create_variant_from_type.rs:11:13
+  --> tests/uncompilable_examples/bad_trait_create_variant_from_type.rs:11:13
    |
 11 |     let _ = Enum::<i64, bool>::create_variant_from(2.0);
    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `variant_access_traits::CreateVariantFrom<{float}, _>` is not implemented for `Enum<i64, bool>`
@@ -7,4 +7,3 @@ error[E0277]: the trait bound `Enum<i64, bool>: variant_access_traits::CreateVar
    = help: the following implementations were found:
              <Enum<Y, X> as variant_access_traits::CreateVariantFrom<X, F2>>
              <Enum<Y, X> as variant_access_traits::CreateVariantFrom<Y, F1>>
-   = note: required by `variant_access_traits::CreateVariantFrom::create_variant_from`

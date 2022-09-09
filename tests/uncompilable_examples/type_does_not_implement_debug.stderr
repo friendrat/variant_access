@@ -1,17 +1,18 @@
 error[E0277]: `Test<X, Y>` doesn't implement `Debug`
-  --> $DIR/type_does_not_implement_debug.rs:13:8
+  --> tests/uncompilable_examples/type_does_not_implement_debug.rs:13:8
    |
+10 | #[derive(VariantAccess, PartialEq, Debug)]
+   |                                    ----- in this derive macro expansion
+...
 13 |     F2(Test<X, Y>)
    |        ^^^^^^^^^^ `Test<X, Y>` cannot be formatted using `{:?}`
    |
    = help: the trait `Debug` is not implemented for `Test<X, Y>`
-   = note: add `#[derive(Debug)]` or manually implement `Debug`
-   = note: required because of the requirements on the impl of `Debug` for `&Test<X, Y>`
-   = note: required for the cast to the object type `dyn Debug`
-   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+   = note: add `#[derive(Debug)]` to `Test<X, Y>` or manually `impl Debug for Test<X, Y>`
+   = note: this error originates in the derive macro `Debug` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 warning: unused import: `variant_access_traits`
- --> $DIR/type_does_not_implement_debug.rs:2:5
+ --> tests/uncompilable_examples/type_does_not_implement_debug.rs:2:5
   |
 2 | use variant_access_traits::*;
   |     ^^^^^^^^^^^^^^^^^^^^^

@@ -1,14 +1,16 @@
 error[E0277]: the trait bound `Enum<i64, bool>: CreateVariantFrom<{float}, _>` is not satisfied
-   --> $DIR/bad_func_create_variant_from_type.rs:13:21
+   --> tests/uncompilable_examples/bad_func_create_variant_from_type.rs:13:21
     |
 13  |     let _ = Wrapper(create_variant_from(42.0));
-    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `CreateVariantFrom<{float}, _>` is not implemented for `Enum<i64, bool>`
-    |
-   ::: /home/r2d2/.cargo/registry/src/github.com-1ecc6299db9ec823/variant_access_traits-0.3.0/src/lib.rs:203:31
-    |
-203 | pub fn create_variant_from<T: CreateVariantFrom<U, Marker>, Marker, U>(value: U) -> T {
-    |                               ---------------------------- required by this bound in `variant_access_traits::create_variant_from`
+    |             ------- ^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `CreateVariantFrom<{float}, _>` is not implemented for `Enum<i64, bool>`
+    |             |
+    |             required by a bound introduced by this call
     |
     = help: the following implementations were found:
               <Enum<Y, X> as CreateVariantFrom<X, F2>>
               <Enum<Y, X> as CreateVariantFrom<Y, F1>>
+note: required by a bound in `variant_access_traits::create_variant_from`
+   --> variant_access_traits/src/lib.rs
+    |
+    | pub fn create_variant_from<T: CreateVariantFrom<U, Marker>, Marker, U>(value: U) -> T {
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `variant_access_traits::create_variant_from`

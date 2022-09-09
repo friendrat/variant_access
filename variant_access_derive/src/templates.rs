@@ -1,4 +1,4 @@
-pub (crate) const CONTAINS_VARIANT_TEMPLATE: &str = r#"
+pub(crate) const CONTAINS_VARIANT_TEMPLATE: &str = r#"
 impl{{ generics }} variant_access_traits::ContainsVariant for {{ fullname }} {
     fn has_variant<{{ template }} : 'static>(&self) -> bool {
         {%- for M in matches %}
@@ -24,9 +24,16 @@ impl{{ generics }} variant_access_traits::ContainsVariant for {{ fullname }} {
 }
 "#;
 
-pub (crate) const GET_VARIANT_TEMPLATE: &str = r#"
+pub(crate) const GET_VARIANT_TEMPLATE: &str = r#"
 impl{{ generics }} variant_access_traits::GetVariant<{{ Type }}, {{ Marker }} > for {{ fullname }} {
-    fn get_variant(&self) -> Result<&{{ Type }}, variant_access_traits::VariantAccessError> {
+    fn get_variant(self) -> Result<{{ Type }}, variant_access_traits::VariantAccessError> {
+        match self {
+            {{ name }}::{{ field }}(inner) => Ok(inner),
+            _ => Err(variant_access_traits::VariantAccessError::wrong_active_field("{{ fullname }}", "{{ Type }}"))
+        }
+    }
+
+    fn get_variant_ref(&self) -> Result<&{{ Type }}, variant_access_traits::VariantAccessError> {
         match &self {
             {{ name }}::{{ field }}(inner) => Ok(inner),
             _ => Err(variant_access_traits::VariantAccessError::wrong_active_field("{{ fullname }}", "{{ Type }}"))
@@ -41,14 +48,14 @@ impl{{ generics }} variant_access_traits::GetVariant<{{ Type }}, {{ Marker }} > 
     }
 }"#;
 
-pub (crate) const SET_VARIANT_TEMPLATE: &str = r#"
+pub(crate) const SET_VARIANT_TEMPLATE: &str = r#"
 impl{{ generics }} variant_access_traits::SetVariant<{{ Type }}, {{ Marker }} > for {{ fullname }} {
     fn set_variant(&mut self, value: {{ Type }}) {
         *self = {{ name }}::{{ field }}(value);
     }
 }"#;
 
-pub (crate) const CREATE_VARIANT_TEMPLATE: &str = r#"
+pub(crate) const CREATE_VARIANT_TEMPLATE: &str = r#"
 impl{{ generics }} variant_access_traits::CreateVariantFrom<{{ Type }}, {{ Marker }}> for {{ fullname }} {
     fn create_variant_from(value : {{ Type }}) -> Self {
         {{ name }}::{{ field }}(value)

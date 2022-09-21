@@ -199,7 +199,6 @@ mod test_namespaces {
     }
 }
 
-
 #[cfg(test)]
 /// Tests that the derive macro correctly panics (thereby failing compilation) for the correct
 /// cases.
@@ -246,7 +245,7 @@ mod test_template_types {
 
     #[derive(VariantAccess, PartialEq, Debug)]
     pub enum Enum<Y: 'static, X: 'static> {
-        F1(Y),
+        F1((X, Y)),
         F2(Test<X, Y>),
     }
 
@@ -255,16 +254,16 @@ mod test_template_types {
 
     #[test]
     fn test_has_variant() {
-        let test = Enum::<i64, bool>::F1(0);
-        assert!(test.has_variant::<i64>());
+        let test = Enum::<i64, bool>::F1((true, 0));
+        assert!(test.has_variant::<(bool, i64)>());
         assert!(test.has_variant::<Test<bool, i64>>());
         assert!(!test.has_variant::<Test<i64, bool>>());
     }
 
     #[test]
     fn test_contains_variant() {
-        let test = Enum::<i64, bool>::F1(42);
-        assert!(test.contains_variant::<i64>().expect("Test failed"));
+        let test = Enum::<i64, bool>::F1((false, 42));
+        assert!(test.contains_variant::<(bool, i64)>().expect("Test failed"));
         assert!(!test
             .contains_variant::<Test<bool, i64>>()
             .expect("Test failed"));
@@ -272,7 +271,7 @@ mod test_template_types {
             inner: true,
             outer: 2,
         });
-        assert!(!test.contains_variant::<i32>().expect("Test failed"));
+        assert!(!test.contains_variant::<(bool, i32)>().expect("Test failed"));
         assert!(test
             .contains_variant::<Test<bool, i32>>()
             .expect("Test failed"));
@@ -280,7 +279,7 @@ mod test_template_types {
 
     #[test]
     fn test_contains_variant_error() {
-        let test = Enum::<i32, bool>::F1(42);
+        let test = Enum::<i32, bool>::F1((true, 42));
         let _ = test
             .contains_variant::<i64>()
             .expect_err("Expected contains_variant to return Err!");
@@ -294,9 +293,9 @@ mod test_template_types {
         });
         let test_field: Test<bool, i64> = test.get_variant().expect("Test failed");
         assert!(test_field.inner);
-        let test = Enum::<i64, bool>::F1(42);
-        let test_field: i64 = test.get_variant().expect("Test failed");
-        assert_eq!(test_field, 42);
+        let test = Enum::<i64, bool>::F1((true, 42));
+        let test_field: (bool, i64) = test.get_variant().expect("Test failed");
+        assert_eq!(test_field, (true, 42));
     }
 
     #[test]
@@ -307,9 +306,9 @@ mod test_template_types {
         });
         let test_field: &Test<bool, i64> = test.get_variant_ref().expect("Test failed");
         assert!(test_field.inner);
-        let test = Enum::<i64, bool>::F1(42);
-        let test_field: &i64 = test.get_variant_ref().expect("Test failed");
-        assert_eq!(test_field, &42);
+        let test = Enum::<i64, bool>::F1((true, 42));
+        let test_field: &(bool, i64) = test.get_variant_ref().expect("Test failed");
+        assert_eq!(test_field, &(true, 42));
     }
 
     #[test]
@@ -336,8 +335,8 @@ mod test_template_types {
             inner: true,
             outer: 2,
         });
-        test.set_variant(42);
-        assert_eq!(test, Enum::<i64, bool>::F1(42));
+        test.set_variant((true, 42));
+        assert_eq!(test, Enum::<i64, bool>::F1((true, 42)));
     }
 
     #[test]

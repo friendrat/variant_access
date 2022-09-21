@@ -23,8 +23,7 @@ members = [
 [dependencies]
 syn = {version= "1.0.99", features=["derive", "extra-traits"]}
 quote = "1.0"
-variant_access_traits = "0.4.0"
-variant_access_derive = {path = "variant_access_derive"}
-
+variant_access_traits = "0.4.1"
+variant_access_derive = "0.4.1"
 [dev-dependencies]
 trybuild = "1.0.40"
